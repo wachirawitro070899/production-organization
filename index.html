@@ -1978,7 +1978,6 @@ function mergeEmployeeSeed(firestoreEmployees=[]){
 }
 // Always show the Excel employee list immediately. Firebase is optional enhancement only.
 employees=mergeEmployeeSeed([]);
-renderAll();
 if(configured){
  try{
   const appMod=await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js');
@@ -2298,6 +2297,7 @@ const v15RenderAll=renderAll;renderAll=function(){v15RenderAll();renderQrEmploye
 // ===== END v15 =====
 
 searchInput.oninput=renderSearch;function renderAll(){renderOrg();renderSection(filter.value);renderSectionChart(chartFilter.value);renderSearch();renderTrainingPlan();renderExamEmployees();renderOnlineExamEmployees();renderOnlineExamHistory();renderPracticalTest();renderSkillAssessments();renderExamApprovals();updateAuthUI(auth&&auth.currentUser);document.getElementById('examViewerNote').classList.toggle('hidden',isAdmin)}
+renderAll();
 setInterval(renderAll,3600000);
 </script>
 </body></html>
