@@ -60,3 +60,10 @@ VERSION 19 - EMPLOYEE IMPORT
 - การอัปโหลดซ้ำจะอัปเดตข้อมูลพื้นฐานและเก็บรูป/Skill เดิมไว้
 - ลบปุ่มเครื่องหมายบวกใต้ Organization Card
 - Header เหลือเฉพาะชื่อบริษัทและชื่อระบบ
+
+
+VERSION 21 - FIX LIVE DEPLOYMENT
+- ฝังรายชื่อพนักงานใน index.html โดยตรง
+- ฝังโลโก้ใน index.html โดยตรง
+- รายชื่อยังแสดงแม้ Firebase/CDN เชื่อมต่อไม่ได้
+- ZIP วางไฟล์ไว้ระดับราก พร้อมอัปโหลดขึ้น GitHub Pages
