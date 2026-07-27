@@ -1,3 +1,11 @@
+PRODUCTION ORGANIZATION SYSTEM - VERSION 20
+
+แก้ไขสำคัญ:
+- รายชื่อพนักงานจากไฟล์ Excel จำนวน 116 คนจะแสดงทันทีบนหน้าเว็บ
+- ไม่ต้องรอให้ Firestore มีข้อมูลก่อน
+- หาก Firestore มีข้อมูลเดิม ระบบจะนำข้อมูลเดิม เช่น รูปและระดับ Skill มารวมกับรายชื่อ Excel
+- ปุ่มอัปโหลดเข้า Firebase ยังใช้งานได้สำหรับ Admin
+
 Production Organization System — Version 18
 
 อัปเดต Header บริษัท:
