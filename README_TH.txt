@@ -20,3 +20,10 @@ Production Organization System v15
 4. ตรวจ firebase-config.js ให้เป็นค่าเดิมของโปรเจกต์
 
 การบันทึกเป็น PDF: กดปุ่มพิมพ์ แล้วเลือก Save as PDF / บันทึกเป็น PDF
+
+
+Version 16
+- QR Code บน Skill Card เปิดหน้าเฉพาะ Skill Matrix ของพนักงานคนนั้น
+- แสดงเฉพาะทักษะของ Section ที่พนักงานสังกัด
+- ซ่อนเมนู Organization, Training, Exam และข้อมูลพนักงานคนอื่น
+- หน้า QR รองรับมือถือและพิมพ์/บันทึก PDF
