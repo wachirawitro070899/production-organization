@@ -20,7 +20,7 @@ form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}label{f
 </head>
 <body>
 <header>
-<div><h1>Production Organization System <small style="font-size:12px;opacity:.8">v9 Edit Employee Fixed Data</small></h1><p>ดูผังองค์กรได้ทุกคน · ผู้ดูแลเข้าสู่ระบบเพื่อแก้ไขข้อมูล</p></div>
+<div><h1>Production Organization System <small style="font-size:12px;opacity:.8">v10 Edit Employee Click Fixed</small></h1><p>ดูผังองค์กรได้ทุกคน · ผู้ดูแลเข้าสู่ระบบเพื่อแก้ไขข้อมูล</p></div>
 <div class="top-actions"><span id="userBadge" class="user-badge">Public Viewer</span><button id="loginBtn" class="btn light">Login</button><button id="logoutBtn" class="btn light hidden">Logout</button></div>
 </header>
 <div class="layout">
@@ -105,7 +105,8 @@ function renderSectionChart(s){
  sectionChartArea.innerHTML=html+'</div>';
 }
 
-function renderSearch(){const q=searchInput.value.toLowerCase();const list=employees.map((e,originalIndex)=>({...e,originalIndex})).filter(e=>Object.values(e).join(' ').toLowerCase().includes(q));results.innerHTML=list.length?list.map(e=>{const key=configured?e.docId:e.originalIndex;return `<tr><td>${avatar(e,true)}</td><td>${e.id||''}</td><td>${e.name||''}</td><td>${e.phone||'-'}</td><td>${e.section||''}</td><td>${e.position||''}</td><td>${fmt(e.startDate)}</td><td>${yearsService(e.startDate)}</td><td class="admin-col ${isAdmin?'':'hidden'}"><button class="btn" style="margin:2px" onclick="openEditEmployee('${key}')">แก้ไขข้อมูล</button><button class="btn secondary" style="margin:2px" onclick="chooseEmployeePhoto('${key}')">เปลี่ยนรูป</button><button class="btn danger" style="margin:2px" onclick="removeEmp('${key}')">ลบ</button></td></tr>`;}).join(''):`<tr><td colspan="9" class="empty">ไม่พบข้อมูล</td></tr>`;}
+function renderSearch(){const q=searchInput.value.toLowerCase();const list=employees.map((e,originalIndex)=>({...e,originalIndex})).filter(e=>Object.values(e).join(' ').toLowerCase().includes(q));results.innerHTML=list.length?list.map(e=>{const key=configured?e.docId:String(e.originalIndex);const safeKey=encodeURIComponent(key);return `<tr><td>${avatar(e,true)}</td><td>${e.id||''}</td><td>${e.name||''}</td><td>${e.phone||'-'}</td><td>${e.section||''}</td><td>${e.position||''}</td><td>${fmt(e.startDate)}</td><td>${yearsService(e.startDate)}</td><td class="admin-col ${isAdmin?'':'hidden'}"><button type="button" class="btn js-edit-employee" data-key="${safeKey}" style="margin:2px">แก้ไขข้อมูล</button><button type="button" class="btn secondary js-change-photo" data-key="${safeKey}" style="margin:2px">เปลี่ยนรูป</button><button type="button" class="btn danger js-delete-employee" data-key="${safeKey}" style="margin:2px">ลบ</button></td></tr>`;}).join(''):`<tr><td colspan="9" class="empty">ไม่พบข้อมูล</td></tr>`;}
+results.addEventListener('click',event=>{const button=event.target.closest('button[data-key]');if(!button)return;event.preventDefault();event.stopPropagation();const key=decodeURIComponent(button.dataset.key||'');if(button.classList.contains('js-edit-employee'))window.openEditEmployee(key);else if(button.classList.contains('js-change-photo'))window.chooseEmployeePhoto(key);else if(button.classList.contains('js-delete-employee'))window.removeEmp(key);});
 searchInput.oninput=renderSearch;function renderAll(){renderOrg();renderSection(filter.value);renderSectionChart(chartFilter.value);renderSearch();updateAuthUI(auth&&auth.currentUser)}
 setInterval(renderAll,3600000);
 </script>
