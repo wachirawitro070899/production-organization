@@ -14,3 +14,11 @@ Production Organization System v10
 
 V11 เพิ่ม Training Plan รายไตรมาส, Annual Training และ Skill Matrix Examination
 กรุณาอัปเดต firestore.rules และกด Publish เพื่อให้บันทึกผลสอบได้
+
+
+Version 12 เพิ่ม:
+- Online Examination Q1-Q4 รวม 40 ข้อ
+- ตรวจคะแนนอัตโนมัติ
+- Practical Test / Job Observation ตาม Section และไตรมาส
+- บันทึกประวัติผลสอบและ Skill Level
+- เกณฑ์ผ่านข้อเขียน 80% และภาคปฏิบัติผ่านทุกข้อ
