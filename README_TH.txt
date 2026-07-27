@@ -1,3 +1,19 @@
+Production Organization System — Version 18
+
+อัปเดต Header บริษัท:
+- เพิ่มโลโก้ JINRONG
+- เพิ่มชื่อบริษัท JINRONG ELECTRONIC TECHNOLOGY (THAILAND) COMPANY LIMITED
+- ปรับ Header ให้รองรับคอมพิวเตอร์และโทรศัพท์
+- คงระบบ Skill Matrix, Skill Card QR, Print และ Download PDF จาก Version 17
+
+Production Organization Training v17
+
+เพิ่มในเวอร์ชันนี้:
+- หน้า QR Skill Matrix มีปุ่มพิมพ์แยกจากปุ่มดาวน์โหลด PDF
+- ปุ่มดาวน์โหลดสร้างไฟล์ PDF โดยตรง ชื่อไฟล์อ้างอิงรหัสพนักงาน
+- PDF แสดงเฉพาะข้อมูลพนักงานและ Skill Matrix ของ Section นั้น
+- รองรับ A4 แนวนอน
+
 Production Organization System v15
 
 เพิ่มจาก v14:
