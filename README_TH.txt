@@ -1,24 +1,22 @@
-Production Organization System v10
+Production Organization System v15
 
-แก้ไขปัญหาปุ่ม "แก้ไขข้อมูล" กดไม่ได้ โดยเปลี่ยนจาก inline onclick
-เป็นระบบ event listener ที่รองรับ Firebase Document ID และเบราว์เซอร์บน GitHub Pages
+เพิ่มจาก v14:
+- Skill Matrix แยกตาม Section
+- ทักษะเฉพาะแต่ละ Section (Stamping อ้างอิงโครงสร้างจากไฟล์ Stamping Deptment.xlsx)
+- Skill Level 1-5 พร้อมสีแสดงระดับ
+- Admin ปรับระดับรายทักษะได้
+- วันที่อัปเดตล่าสุดและกำหนดอัปเดตครั้งถัดไปทุก 3 เดือน
+- ตัวกรองผู้ที่ถึงกำหนด/เกินกำหนด
+- สรุปจำนวนและเปอร์เซ็นต์พนักงาน Level 3 ขึ้นไป
+- Skill Card รายบุคคล พร้อมรูป, เครื่องจักร, วันหมดรอบ และ QR
+- พิมพ์ Skill Card รายคนหรือทั้ง Section
+- พิมพ์ Skill Matrix ราย Section หรือทุก Section
+- พิมพ์/PDF ได้ครบ: Organization, Section, Section Chart, รายชื่อพนักงาน, Training Plan, ข้อสอบ, รายการรอผล, ประวัติสอบ, Skill Matrix, Skill Card
 
-วิธีอัปเดต
-1. แตกไฟล์ ZIP
-2. อัปโหลดไฟล์ทั้งหมดทับไฟล์เดิมใน GitHub repository
-3. กด Commit changes
-4. รอ GitHub Pages อัปเดต 1-2 นาที
-5. เปิดเว็บแล้วกด Ctrl + F5
-6. ตรวจสอบว่าหัวเว็บแสดง v10 Edit Employee Click Fixed
+วิธีติดตั้ง:
+1. แตก ZIP
+2. อัปโหลดไฟล์ทั้งหมดทับใน GitHub repository
+3. นำ firestore.rules ไปวางใน Firebase Firestore Rules แล้วกด Publish
+4. ตรวจ firebase-config.js ให้เป็นค่าเดิมของโปรเจกต์
 
-
-V11 เพิ่ม Training Plan รายไตรมาส, Annual Training และ Skill Matrix Examination
-กรุณาอัปเดต firestore.rules และกด Publish เพื่อให้บันทึกผลสอบได้
-
-
-Version 12 เพิ่ม:
-- Online Examination Q1-Q4 รวม 40 ข้อ
-- ตรวจคะแนนอัตโนมัติ
-- Practical Test / Job Observation ตาม Section และไตรมาส
-- บันทึกประวัติผลสอบและ Skill Level
-- เกณฑ์ผ่านข้อเขียน 80% และภาคปฏิบัติผ่านทุกข้อ
+การบันทึกเป็น PDF: กดปุ่มพิมพ์ แล้วเลือก Save as PDF / บันทึกเป็น PDF
