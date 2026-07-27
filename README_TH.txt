@@ -10,3 +10,7 @@ Production Organization System v10
 4. รอ GitHub Pages อัปเดต 1-2 นาที
 5. เปิดเว็บแล้วกด Ctrl + F5
 6. ตรวจสอบว่าหัวเว็บแสดง v10 Edit Employee Click Fixed
+
+
+V11 เพิ่ม Training Plan รายไตรมาส, Annual Training และ Skill Matrix Examination
+กรุณาอัปเดต firestore.rules และกด Publish เพื่อให้บันทึกผลสอบได้
