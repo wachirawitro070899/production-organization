@@ -28,6 +28,10 @@ form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}label{f
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<style id="exportCenterStyle">.export-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}.export-card{border:1px solid var(--line);border-radius:12px;padding:15px;background:#f8fbff}.export-card h3{margin:0 0 12px;color:var(--p)}.export-card .btn{display:block;width:100%;margin-top:8px}.export-working{opacity:.65;pointer-events:none}</style>
 </head>
 <body>
 <header>
@@ -49,10 +53,23 @@ form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}label{f
 <button data-page="search">Search</button>
 <button data-page="training">Training Plan</button>
 <button data-page="onlineExam">Online Examination</button>
-<button data-page="sectionSkillMatrix">Section Skill Matrix</button><button data-page="skillCards">Employee Skill Cards</button><button data-page="skillMatrix">Skill Matrix Exam</button>
+<button data-page="sectionSkillMatrix">Section Skill Matrix</button><button data-page="skillCards">Employee Skill Cards</button><button data-page="skillMatrix">Skill Matrix Exam</button><button data-page="exportCenter">Export Center</button>
 </nav>
 <main>
 <div id="configNotice" class="notice hidden"><b>ยังไม่ได้เชื่อม Firebase</b><br>กรุณาใส่ Firebase Config ในไฟล์ <code>firebase-config.js</code> เพื่อให้หลายคนเห็นข้อมูลชุดเดียวกันและเข้าสู่ระบบได้จริง</div>
+<section id="exportCenter" class="page">
+<div class="panel">
+<div class="exam-head"><div><h2 style="margin:0 0 5px">Export Center</h2><div class="exam-note">ดาวน์โหลดข้อมูลและเอกสารทั้งหมดลงคอมพิวเตอร์</div></div><div id="exportStatus" class="exam-progress">พร้อมดาวน์โหลด</div></div>
+<div class="export-grid" style="margin-top:16px">
+<div class="export-card"><h3>Employee</h3><button class="btn secondary" id="exportEmployeesExcel">ดาวน์โหลดรายชื่อพนักงาน Excel</button><button class="btn secondary" id="exportEmployeesCsv">ดาวน์โหลดรายชื่อพนักงาน CSV</button></div>
+<div class="export-card"><h3>Skill Card</h3><button class="btn secondary" id="exportAllSkillCardsPdf">ดาวน์โหลด Skill Card ทั้งหมด PDF</button><button class="btn secondary" id="exportSectionSkillCardsPdf">ดาวน์โหลด Skill Card Section ที่เลือก PDF</button></div>
+<div class="export-card"><h3>Skill Matrix</h3><button class="btn secondary" id="exportAllSkillMatrixPdf">ดาวน์โหลด Skill Matrix ทุก Section PDF</button><button class="btn secondary" id="exportSkillMatrixExcel">ดาวน์โหลด Skill Matrix Excel</button></div>
+<div class="export-card"><h3>Training & Examination</h3><button class="btn secondary" id="exportTrainingPdf">ดาวน์โหลด Training Plan PDF</button><button class="btn secondary" id="exportExamPdf">ดาวน์โหลดผลสอบ PDF</button></div>
+<div class="export-card"><h3>Organization</h3><button class="btn secondary" id="exportOrganizationPdf">ดาวน์โหลด Organization PDF</button><button class="btn secondary" id="exportSectionChartsPdf">ดาวน์โหลด Section Chart ทุก Section PDF</button></div>
+<div class="export-card"><h3>Backup</h3><button class="btn secondary" id="exportBackupJson">ดาวน์โหลดข้อมูลสำรอง JSON</button><button class="btn" id="exportAllZip">ดาวน์โหลดทั้งหมดเป็น ZIP</button></div>
+</div>
+</div>
+</section>
 <section id="organization" class="page active">
 <div class="stats"><div class="stat"><span>พนักงานทั้งหมด</span><b id="total">0</b></div><div class="stat"><span>Section</span><b>10</b></div><div class="stat"><span>เข้าใหม่เดือนนี้</span><b id="newMonth">0</b></div><div class="stat"><span>ผู้ใช้งาน</span><b id="roleText" style="font-size:20px">Viewer</b></div></div>
 <div class="report-actions no-print"><button id="printOrganizationBtn" class="btn secondary">พิมพ์ Organization / บันทึก PDF</button></div><div class="panel"><div style="text-align:center"><h2>Production Division</h2><div style="display:inline-block;background:#dceaf7;color:#1f4e79;padding:12px 20px;border-radius:10px;font-weight:700">Production Manager<br><small>ผู้จัดการฝ่ายผลิต</small></div></div><div id="orgSections" class="sections-grid" style="margin-top:18px"></div></div>
@@ -2430,5 +2447,44 @@ const v15RenderAll=renderAll;renderAll=function(){v15RenderAll();renderQrEmploye
 searchInput.oninput=renderSearch;function renderAll(){renderOrg();renderSection(filter.value);renderSectionChart(chartFilter.value);renderSearch();renderTrainingPlan();renderExamEmployees();renderOnlineExamEmployees();renderOnlineExamHistory();renderPracticalTest();renderSkillAssessments();renderExamApprovals();updateAuthUI(auth&&auth.currentUser);document.getElementById('examViewerNote').classList.toggle('hidden',isAdmin)}
 renderAll();
 setInterval(renderAll,3600000);
+
+// ===== v28 EXPORT CENTER =====
+function exportSafeName(v){return String(v||'file').trim().replace(/[^A-Za-z0-9ก-๙_-]+/g,'_').replace(/^_+|_+$/g,'')||'file'}
+function exportSetStatus(t,busy=false){const el=document.getElementById('exportStatus');if(el)el.textContent=t;const page=document.getElementById('exportCenter');if(page)page.classList.toggle('export-working',busy)}
+function exportDownloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},800)}
+function exportEmployeesRows(){return employees.map((e,i)=>({No:i+1,'Employee ID':e.id||'','Name':e.name||'','Section':e.section||'','Position':e.position||'','Phone':e.phone||'','Start Date':e.startDate||'','Machine':e.assignedMachine||'','Skill Approved By':e.skillApprovedBy||'','Skill Updated At':e.skillUpdatedAt||''}))}
+function exportCsv(rows){if(!rows.length)return '';const hs=Object.keys(rows[0]);const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';return '\ufeff'+[hs.map(q).join(','),...rows.map(r=>hs.map(h=>q(r[h])).join(','))].join('\r\n')}
+function exportEmployeesCsvBlob(){return new Blob([exportCsv(exportEmployeesRows())],{type:'text/csv;charset=utf-8'})}
+function exportEmployeesXlsxBlob(){if(!window.XLSX)throw new Error('ไม่พบระบบ Excel');const wb=XLSX.utils.book_new(),ws=XLSX.utils.json_to_sheet(exportEmployeesRows());XLSX.utils.book_append_sheet(wb,ws,'Employees');const out=XLSX.write(wb,{bookType:'xlsx',type:'array'});return new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})}
+function exportSkillMatrixRows(){const rows=[];employees.forEach(e=>{const lv=employeeSkillLevels(e);Object.entries(lv).forEach(([skill,level])=>rows.push({'Employee ID':e.id||'','Name':e.name||'','Section':e.section||'','Position':e.position||'','Skill':skill,'Level':Number(level)||1,'Last Update':e.skillUpdatedAt||'','Approved By':e.skillApprovedBy||''}))});return rows}
+function exportSkillMatrixXlsxBlob(){if(!window.XLSX)throw new Error('ไม่พบระบบ Excel');const wb=XLSX.utils.book_new(),ws=XLSX.utils.json_to_sheet(exportSkillMatrixRows());XLSX.utils.book_append_sheet(wb,ws,'Skill Matrix');const out=XLSX.write(wb,{bookType:'xlsx',type:'array'});return new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})}
+async function exportNodeCanvas(node,orientation='landscape'){const canvas=await html2canvas(node,{scale:1.7,useCORS:true,backgroundColor:'#ffffff',logging:false,windowWidth:Math.max(node.scrollWidth,1200)});const {jsPDF}=window.jspdf,pdf=new jsPDF({orientation,unit:'mm',format:'a4'}),pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight(),m=7,maxW=pw-m*2,maxH=ph-m*2;let w=maxW,h=canvas.height*w/canvas.width;if(h>maxH){h=maxH;w=canvas.width*h/canvas.height}pdf.addImage(canvas.toDataURL('image/jpeg',.93),'JPEG',(pw-w)/2,m,w,h,'','FAST');return pdf}
+async function exportHtmlPdfBlob(title,html,orientation='landscape'){
+ const wrap=document.createElement('div');wrap.style.cssText='position:fixed;left:-100000px;top:0;width:1120px;background:white;padding:24px;z-index:-1';wrap.innerHTML=`<div style="font-family:Segoe UI,Tahoma,sans-serif"><h1 style="color:#1f4e79;margin:0 0 6px">${esc(title)}</h1><div style="margin-bottom:14px">วันที่ ${new Date().toLocaleDateString('th-TH')}</div>${html}</div>`;document.body.appendChild(wrap);try{const pdf=await exportNodeCanvas(wrap,orientation);return pdf.output('blob')}finally{wrap.remove()}
+}
+async function exportAllSkillCardsBlob(list=employees){if(!window.jspdf||!window.html2canvas)throw new Error('ไม่พบระบบ PDF');const {jsPDF}=window.jspdf,pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});let first=true;for(let i=0;i<list.length;i++){exportSetStatus(`กำลังสร้าง Skill Card ${i+1}/${list.length}`,true);const wrap=document.createElement('div');wrap.style.cssText='position:fixed;left:-100000px;top:0;width:1050px;background:white;padding:18px';wrap.innerHTML=skillCardHTML(list[i]);document.body.appendChild(wrap);try{const c=await html2canvas(wrap,{scale:1.5,useCORS:true,backgroundColor:'#fff',logging:false});if(!first)pdf.addPage('a4','landscape');first=false;const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight(),m=8;let w=pw-m*2,h=c.height*w/c.width;if(h>ph-m*2){h=ph-m*2;w=c.width*h/c.height}pdf.addImage(c.toDataURL('image/jpeg',.93),'JPEG',(pw-w)/2,m,w,h,'','FAST')}finally{wrap.remove()}}return pdf.output('blob')}
+function exportMatrixTable(section){const list=employees.filter(e=>e.section===section),skills=sectionSkills[section]||[];return `<div style="page-break-after:always"><h2 style="color:#1f4e79">${esc(section)} - Skill Matrix</h2><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr><th style="border:1px solid #bbb;padding:5px">ID</th><th style="border:1px solid #bbb;padding:5px">Name</th>${skills.map(x=>`<th style="border:1px solid #bbb;padding:5px">${esc(x)}</th>`).join('')}</tr></thead><tbody>${list.map(e=>{const lv=employeeSkillLevels(e);return `<tr><td style="border:1px solid #bbb;padding:5px">${esc(e.id||'')}</td><td style="border:1px solid #bbb;padding:5px">${esc(e.name||'')}</td>${skills.map(x=>`<td style="border:1px solid #bbb;padding:5px;text-align:center">${Number(lv[x])||1}</td>`).join('')}</tr>`}).join('')}</tbody></table></div>`}
+async function exportAllMatricesBlob(){const sections=[...new Set(employees.map(e=>e.section).filter(Boolean))];return exportHtmlPdfBlob('ALL SECTION SKILL MATRIX',sections.map(exportMatrixTable).join(''),'landscape')}
+async function exportSectionChartsBlob(){const sections=[...new Set(employees.map(e=>e.section).filter(Boolean))];let html='';for(const sec of sections){try{chartFilter.value=sec;renderSectionChart(sec);html+=`<div style="page-break-after:always"><h2>${esc(sec)}</h2>${document.getElementById('sectionChartArea').innerHTML}</div>`}catch(e){html+=`<h2>${esc(sec)}</h2>`}}return exportHtmlPdfBlob('ALL SECTION ORGANIZATION CHART',html,'landscape')}
+function exportBackupBlob(){const data={exportedAt:new Date().toISOString(),employees,trainingPlans:window.trainingPlans||[],examResults:window.examResultsData||window.skillAssessments||[],onlineExamHistory:window.onlineExamResults||[],localStorage:{productionEmployees:localStorage.getItem('productionEmployees')}};return new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'})}
+async function exportRun(fn,ok){try{exportSetStatus('กำลังเตรียมไฟล์...',true);await fn();exportSetStatus(ok||'ดาวน์โหลดสำเร็จ',false)}catch(err){console.error(err);exportSetStatus('เกิดข้อผิดพลาด',false);alert('ดาวน์โหลดไม่สำเร็จ: '+(err?.message||err))}}
+function bindExportCenter(){
+ const $=id=>document.getElementById(id);if(!$('exportCenter')||$('exportCenter').dataset.bound)return;$('exportCenter').dataset.bound='1';
+ $('exportEmployeesExcel').onclick=()=>exportRun(async()=>exportDownloadBlob(exportEmployeesXlsxBlob(),'Employee_List.xlsx'));
+ $('exportEmployeesCsv').onclick=()=>exportRun(async()=>exportDownloadBlob(exportEmployeesCsvBlob(),'Employee_List.csv'));
+ $('exportSkillMatrixExcel').onclick=()=>exportRun(async()=>exportDownloadBlob(exportSkillMatrixXlsxBlob(),'Skill_Matrix_All.xlsx'));
+ $('exportBackupJson').onclick=()=>exportRun(async()=>exportDownloadBlob(exportBackupBlob(),'Production_Organization_Backup.json'));
+ $('exportAllSkillCardsPdf').onclick=()=>exportRun(async()=>exportDownloadBlob(await exportAllSkillCardsBlob(employees),'All_Employee_Skill_Cards.pdf'));
+ $('exportSectionSkillCardsPdf').onclick=()=>exportRun(async()=>{const sec=scSection.value||employees[0]?.section,list=employees.filter(e=>e.section===sec);exportDownloadBlob(await exportAllSkillCardsBlob(list),`${exportSafeName(sec)}_Skill_Cards.pdf`)});
+ $('exportAllSkillMatrixPdf').onclick=()=>exportRun(async()=>exportDownloadBlob(await exportAllMatricesBlob(),'All_Section_Skill_Matrix.pdf'));
+ $('exportTrainingPdf').onclick=()=>exportRun(async()=>exportDownloadBlob(await exportHtmlPdfBlob('TRAINING PLAN',document.getElementById('training').innerHTML),'Training_Plan.pdf'));
+ $('exportExamPdf').onclick=()=>exportRun(async()=>exportDownloadBlob(await exportHtmlPdfBlob('EXAMINATION RESULT',document.getElementById('skillMatrix').innerHTML),'Examination_Result.pdf'));
+ $('exportOrganizationPdf').onclick=()=>exportRun(async()=>exportDownloadBlob(await exportHtmlPdfBlob('PRODUCTION ORGANIZATION',document.getElementById('organization').innerHTML),'Production_Organization.pdf'));
+ $('exportSectionChartsPdf').onclick=()=>exportRun(async()=>exportDownloadBlob(await exportSectionChartsBlob(),'All_Section_Charts.pdf'));
+ $('exportAllZip').onclick=()=>exportRun(async()=>{if(!window.JSZip)throw new Error('ไม่พบระบบ ZIP');const z=new JSZip();z.file('Employee_List.xlsx',exportEmployeesXlsxBlob());z.file('Employee_List.csv',exportEmployeesCsvBlob());z.file('Skill_Matrix_All.xlsx',exportSkillMatrixXlsxBlob());z.file('Production_Organization_Backup.json',exportBackupBlob());z.file('All_Employee_Skill_Cards.pdf',await exportAllSkillCardsBlob(employees));z.file('All_Section_Skill_Matrix.pdf',await exportAllMatricesBlob());z.file('Training_Plan.pdf',await exportHtmlPdfBlob('TRAINING PLAN',document.getElementById('training').innerHTML));z.file('Examination_Result.pdf',await exportHtmlPdfBlob('EXAMINATION RESULT',document.getElementById('skillMatrix').innerHTML));z.file('Production_Organization.pdf',await exportHtmlPdfBlob('PRODUCTION ORGANIZATION',document.getElementById('organization').innerHTML));exportSetStatus('กำลังรวมไฟล์ ZIP...',true);exportDownloadBlob(await z.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}}),'Production_Organization_All_Exports.zip')},'ดาวน์โหลด ZIP สำเร็จ');
+}
+bindExportCenter();
+// ===== END v28 =====
+
 </script>
 </body></html>

@@ -80,3 +80,6 @@ Version 24
 
 
 Version 26: เพิ่มปุ่มบันทึก Skill Card และบันทึก Skill Matrix ลง Firebase พร้อมอัปเดตรอบประเมิน 3 เดือน
+
+
+Version 27: เพิ่มปุ่มดาวน์โหลด PDF ลงคอมโดยตรงสำหรับ Skill Card รายบุคคล, Skill Card ทั้ง Section, Skill Matrix ราย Section และ Skill Matrix ทุก Section
