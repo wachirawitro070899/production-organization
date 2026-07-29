@@ -1,85 +1,17 @@
-PRODUCTION ORGANIZATION SYSTEM - VERSION 20
+Production Organization Training Version 35
 
-แก้ไขสำคัญ:
-- รายชื่อพนักงานจากไฟล์ Excel จำนวน 116 คนจะแสดงทันทีบนหน้าเว็บ
-- ไม่ต้องรอให้ Firestore มีข้อมูลก่อน
-- หาก Firestore มีข้อมูลเดิม ระบบจะนำข้อมูลเดิม เช่น รูปและระดับ Skill มารวมกับรายชื่อ Excel
-- ปุ่มอัปโหลดเข้า Firebase ยังใช้งานได้สำหรับ Admin
+เพิ่มระบบล็อกชุดข้อสอบตาม Skill Matrix เดิม
+- ระบบอ่าน Level ต่ำสุดจากหัวข้อ Skill Matrix เดิม เพื่อกำหนดชุดข้อสอบ
+- Level 1 -> Level 2 ใช้ Q1 Foundation Test
+- Level 2 -> Level 3 ใช้ Q2 Operation Qualification
+- Level 3 -> Level 4 ใช้ Q3 Advanced Operator
+- Level 4 -> Level 5 ใช้ Q4 Trainer & Expert
+- Level 5 ใช้ Q4 Renewal
+- ยังไม่ครบกำหนด 3 เดือน: ปุ่มเริ่มสอบและพิมพ์ถูกล็อก
+- ไม่มีประวัติประเมินเดิม: อนุญาตให้ประเมินครั้งแรกทันที
+- หัวข้อ Practical Test ล็อกจากหัวข้อที่มี Level ต่ำสุดใน Matrix เดิม
+- บันทึก Snapshot Skill เดิมก่อนปรับใหม่
+- Level 4-5 ต้องรอ Admin อนุมัติ
+- ผลสอบไม่ผ่านจะไม่สามารถปรับ Level สูงขึ้น
 
-Production Organization System — Version 18
-
-อัปเดต Header บริษัท:
-- เพิ่มโลโก้ JINRONG
-- เพิ่มชื่อบริษัท JINRONG ELECTRONIC TECHNOLOGY (THAILAND) COMPANY LIMITED
-- ปรับ Header ให้รองรับคอมพิวเตอร์และโทรศัพท์
-- คงระบบ Skill Matrix, Skill Card QR, Print และ Download PDF จาก Version 17
-
-Production Organization Training v17
-
-เพิ่มในเวอร์ชันนี้:
-- หน้า QR Skill Matrix มีปุ่มพิมพ์แยกจากปุ่มดาวน์โหลด PDF
-- ปุ่มดาวน์โหลดสร้างไฟล์ PDF โดยตรง ชื่อไฟล์อ้างอิงรหัสพนักงาน
-- PDF แสดงเฉพาะข้อมูลพนักงานและ Skill Matrix ของ Section นั้น
-- รองรับ A4 แนวนอน
-
-Production Organization System v15
-
-เพิ่มจาก v14:
-- Skill Matrix แยกตาม Section
-- ทักษะเฉพาะแต่ละ Section (Stamping อ้างอิงโครงสร้างจากไฟล์ Stamping Deptment.xlsx)
-- Skill Level 1-5 พร้อมสีแสดงระดับ
-- Admin ปรับระดับรายทักษะได้
-- วันที่อัปเดตล่าสุดและกำหนดอัปเดตครั้งถัดไปทุก 3 เดือน
-- ตัวกรองผู้ที่ถึงกำหนด/เกินกำหนด
-- สรุปจำนวนและเปอร์เซ็นต์พนักงาน Level 3 ขึ้นไป
-- Skill Card รายบุคคล พร้อมรูป, เครื่องจักร, วันหมดรอบ และ QR
-- พิมพ์ Skill Card รายคนหรือทั้ง Section
-- พิมพ์ Skill Matrix ราย Section หรือทุก Section
-- พิมพ์/PDF ได้ครบ: Organization, Section, Section Chart, รายชื่อพนักงาน, Training Plan, ข้อสอบ, รายการรอผล, ประวัติสอบ, Skill Matrix, Skill Card
-
-วิธีติดตั้ง:
-1. แตก ZIP
-2. อัปโหลดไฟล์ทั้งหมดทับใน GitHub repository
-3. นำ firestore.rules ไปวางใน Firebase Firestore Rules แล้วกด Publish
-4. ตรวจ firebase-config.js ให้เป็นค่าเดิมของโปรเจกต์
-
-การบันทึกเป็น PDF: กดปุ่มพิมพ์ แล้วเลือก Save as PDF / บันทึกเป็น PDF
-
-
-Version 16
-- QR Code บน Skill Card เปิดหน้าเฉพาะ Skill Matrix ของพนักงานคนนั้น
-- แสดงเฉพาะทักษะของ Section ที่พนักงานสังกัด
-- ซ่อนเมนู Organization, Training, Exam และข้อมูลพนักงานคนอื่น
-- หน้า QR รองรับมือถือและพิมพ์/บันทึก PDF
-
-
-VERSION 19 - EMPLOYEE IMPORT
-- เพิ่มรายชื่อพนักงานจาก Excel จำนวน 116 คน ครบ 10 Section
-- Admin เปิดหน้า Search แล้วกด 'อัปโหลดรายชื่อ 116 คนเข้า Firebase'
-- ใช้รหัสพนักงานเป็น Document ID ป้องกันข้อมูลซ้ำ
-- การอัปโหลดซ้ำจะอัปเดตข้อมูลพื้นฐานและเก็บรูป/Skill เดิมไว้
-- ลบปุ่มเครื่องหมายบวกใต้ Organization Card
-- Header เหลือเฉพาะชื่อบริษัทและชื่อระบบ
-
-
-VERSION 21 - FIX LIVE DEPLOYMENT
-- ฝังรายชื่อพนักงานใน index.html โดยตรง
-- ฝังโลโก้ใน index.html โดยตรง
-- รายชื่อยังแสดงแม้ Firebase/CDN เชื่อมต่อไม่ได้
-- ZIP วางไฟล์ไว้ระดับราก พร้อมอัปโหลดขึ้น GitHub Pages
-
-
-Version 22: แก้ปัญหาเมนูกดไม่ได้จากการเรียก renderAll ก่อน DOM/ตัวแปรพร้อม และฝังโลโก้ JR ใหม่โดยตรงในหน้าเว็บ
-
-
-Version 24
-- อัปเดตรายชื่อ 116 คนจากไฟล์ รายชื่อพนักงานโรง 1 ทั้งหมด(2).xlsx
-- แก้ไขข้อมูลพนักงานทุกช่องและบันทึก Firebase ได้
-- เพิ่ม Supervisor และ Leader เป็นตำแหน่งมาตรฐานใน Section ที่กำหนด
-- แสดงตำแหน่งว่างเมื่อยังไม่มีผู้ดำรงตำแหน่ง โดยไม่แต่งตั้งบุคคลเอง
-
-
-Version 26: เพิ่มปุ่มบันทึก Skill Card และบันทึก Skill Matrix ลง Firebase พร้อมอัปเดตรอบประเมิน 3 เดือน
-
-
-Version 27: เพิ่มปุ่มดาวน์โหลด PDF ลงคอมโดยตรงสำหรับ Skill Card รายบุคคล, Skill Card ทั้ง Section, Skill Matrix ราย Section และ Skill Matrix ทุก Section
+วิธีติดตั้ง: อัปโหลดไฟล์ทั้งหมดทับ Repository เดิม แล้วกด Ctrl+F5
