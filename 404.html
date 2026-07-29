@@ -61,6 +61,12 @@ body.employee-exam-mode .employee-portal-only{display:inline-flex!important}
 #employeePortalModal .portal-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:16px}
 #employeeIdentity{margin:0 0 12px;padding:12px 14px;border-radius:10px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font-weight:800}
 </style>
+
+<style id="safeLangCss">
+#safeLanguageSwitcher{position:fixed;top:10px;right:12px;z-index:9999;display:flex;gap:4px;background:#124b82;padding:4px;border-radius:9px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+#safeLanguageSwitcher button{border:0;border-radius:7px;padding:7px 11px;font-weight:800;cursor:pointer;background:transparent;color:#fff}
+#safeLanguageSwitcher button.active{background:#fff;color:#124b82}
+</style>
 </head>
 <body>
 <header>
@@ -3116,88 +3122,29 @@ select:disabled{opacity:.65!important;cursor:not-allowed!important}
 
 <!-- v56: robust submit and score for employee/admin modes -->
 
-<style id="i18nStyle">
-.lang-switch{display:flex;gap:4px;background:rgba(255,255,255,.14);padding:4px;border-radius:9px}.lang-switch button{border:0;border-radius:7px;padding:7px 11px;font-weight:800;cursor:pointer;background:transparent;color:#fff}.lang-switch button.active{background:#fff;color:#124b82}.lang-switch button:focus{outline:2px solid #facc15;outline-offset:1px}
-@media(max-width:760px){.lang-switch{align-self:flex-end}}
-</style>
-<script id="globalI18nScript">
+<script id="safeLanguageOnly">
 (function(){
-'use strict';
-const TH='th', EN='en';
-let lang=localStorage.getItem('productionLanguage')||TH;
-const pairs={
-'พนักงานทั้งหมด':'Total Employees','เข้าใหม่เดือนนี้':'New This Month','ผู้ใช้งาน':'User Role','ผู้จัดการฝ่ายผลิต':'Production Manager',
-'พิมพ์ Organization / บันทึก PDF':'Print Organization / Save PDF','เลือก Section และเรียงลำดับพนักงานได้':'Select a section and sort employees',
-'ทุกตำแหน่ง':'All Positions','ตำแหน่ง':'Position','เรียงตาม':'Sort By','ลำดับตำแหน่ง':'Position Order','ชื่อพนักงาน':'Employee Name','รหัสพนักงาน':'Employee ID','วันที่เริ่มงาน':'Start Date','อายุงาน':'Service Period','ลำดับ':'Order','ค้นหาใน Section':'Search in Section',
-'น้อย → มาก / A → Z':'Ascending / A → Z','มาก → น้อย / Z → A':'Descending / Z → A','ค้นหาชื่อ รหัส เบอร์โทร หรือตำแหน่ง':'Search name, ID, phone or position',
-'ชื่อ-นามสกุล':'Full Name','เบอร์โทรติดต่อ':'Contact Number','รูปพนักงาน':'Employee Photo','บันทึกพนักงาน':'Save Employee','ตัวอย่างรูปพนักงาน':'Employee Photo Preview',
-'รองรับ JPG, PNG, WEBP · ระบบจะย่อรูปอัตโนมัติ · ขนาดไม่เกิน 5 MB':'Supports JPG, PNG and WEBP · Images are resized automatically · Maximum 5 MB',
-'รูป':'Photo','รหัส':'ID','ชื่อ':'Name','เบอร์โทร':'Phone','จัดการ':'Actions','ค้นหาชื่อ รหัส Section หรือตำแหน่ง':'Search name, ID, section or position',
-'วิธีแก้ไขและเซฟข้อมูล':'How to Edit and Save','อัปโหลด/ซิงก์ข้อมูลพนักงาน 116 คน':'Upload/Sync 116 Employees',
-'นำเข้าจากแผน Audit เดือนกรกฎาคม 2026 และเพิ่มแผนใหม่ได้':'Imported from the July 2026 audit plan; new plans can be added',
-'พิมพ์แผน / PDF':'Print Plan / PDF','ทั้งหมด':'All','สถานะ':'Status','รอประเมิน':'Pending Evaluation','ประเมินแล้ว':'Completed','ไม่ผ่าน':'Failed','เกินกำหนด':'Overdue','เดือน':'Month','ค้นหา':'Search','เพิ่มแผนประเมิน':'Add Evaluation Plan','พนักงาน':'Employee','ประเภทการประเมิน':'Evaluation Type','วันที่ประเมิน':'Evaluation Date','ผู้ประเมิน':'Evaluator','เลือกผู้ประเมิน':'Select Evaluator','เพิ่มลงแผน':'Add to Plan','ประเภท':'Type','คะแนน':'Score','ผล':'Result','ดำเนินการ':'Action','ปิด':'Close','หมายเหตุ':'Remarks','คะแนนรวม':'Total Score','บันทึกผล Job Observation':'Save Job Observation Result',
-'ไตรมาส':'Quarter','ม.ค.–มี.ค.':'Jan–Mar','เม.ย.–มิ.ย.':'Apr–Jun','ก.ค.–ก.ย.':'Jul–Sep','ต.ค.–ธ.ค.':'Oct–Dec',
-'ระบบ Fix ชุดข้อสอบตาม Skill Level ปัจจุบัน: Level 1–2 ปรับถึง Level 3 อัตโนมัติ ส่วน Level 3 ขึ้นไปต้องรออนุมัติ':'The exam set is fixed by the current skill level: Levels 1–2 advance automatically up to Level 3; Level 3 and above require approval',
-'ยังไม่ได้เริ่มสอบ':'Exam Not Started','ระบบกำหนดชุดข้อสอบตามระดับ Skill ของพนักงาน':'The system assigns the exam set based on the employee skill level','เลือกพนักงานเพื่อดูชุดข้อสอบที่เหมาะกับระดับ Skill':'Select an employee to view the assigned exam set','Skill เดิม':'Current Skill','ชุดข้อสอบที่กำหนด':'Assigned Exam Set','เป้าหมายใหม่':'Target Level','ครบกำหนดประเมิน':'Evaluation Due Date','เริ่มทำข้อสอบ':'Start Examination','พิมพ์ข้อสอบ + Skill Matrix / บันทึก PDF':'Print Exam + Skill Matrix / Save PDF',
-'ส่งข้อสอบและตรวจคะแนน':'Submit Exam and Check Score','ข้อที่ยังไม่ได้ตอบ':'Unanswered Questions','ตอบคำถามให้ครบทุกข้อ':'Please answer all questions','สอบผ่าน':'Passed','สอบไม่ผ่าน':'Not Passed','รออนุมัติ':'Pending Approval','อนุมัติ':'Approve','ไม่อนุมัติ':'Reject','อนุมัติแล้ว':'Approved','ปฏิเสธแล้ว':'Rejected',
-'บันทึกผลสอบ':'Save Exam Result','คำนวณจากคะแนนอัตโนมัติ':'Calculate Automatically','หัวข้อทักษะ':'Skill Topic','เลือกหัวข้อทักษะ':'Select Skill Topic','ระดับใหม่':'New Level','ประวัติการประเมิน':'Assessment Records','วันที่':'Date','หัวข้อ':'Topic','ระดับทักษะ':'Skill Level',
-'รอบประเมิน':'Evaluation Quarter','รอบปัจจุบันอัตโนมัติ':'Current Quarter (Auto)','ค้นหาพนักงาน':'Search Employee','ชื่อหรือรหัส':'Name or ID','พิมพ์ Skill Matrix / PDF':'Print Skill Matrix / PDF','พิมพ์ทุก Section / PDF':'Print All Sections / PDF',
-'เครื่องจักร/พื้นที่ประจำ':'Assigned Machine / Area','เลือกเครื่องจักร/พื้นที่':'Select Machine / Area','ผู้อนุมัติ':'Approved By','เลือกผู้อนุมัติ':'Select Approver','พิมพ์บัตรที่เลือก / PDF':'Print Selected Card / PDF','พิมพ์บัตรทั้ง Section / PDF':'Print All Section Cards / PDF',
-'ไม่มีข้อมูล':'No Data','ยังไม่มีพนักงาน':'No Employees Yet','ไม่พบข้อมูล':'No Data Found','กำลังโหลดข้อมูล':'Loading Data','บันทึก':'Save','ยกเลิก':'Cancel','แก้ไข':'Edit','ลบ':'Delete','พิมพ์':'Print','ดาวน์โหลด':'Download','เข้าสู่ระบบ':'Login','ออกจากระบบ':'Logout','พนักงานเข้าสอบ':'Employee Examination','เข้าหน้าทดสอบ':'Enter Examination','กรอกรหัสพนักงานเพื่อเปิดเฉพาะหน้าทำข้อสอบของตนเอง':'Enter your employee ID to open only your examination page',
-'เลือก':'Select','ระดับ':'Level','ผ่าน':'Pass','ไม่ผ่าน':'Fail','รอ':'Pending','แผนก':'Section','ฝ่ายผลิต':'Production Division','หน่วยงานคัดแยก':'Sorting Unit','โรง 1':'Plant 1','โรง 2':'Plant 2'
-};
-const reverse=Object.fromEntries(Object.entries(pairs).map(([k,v])=>[v,k]));
-const thRx=/[\u0E00-\u0E7F]/, enRx=/[A-Za-z]/;
-function bilingual(original,target){
- const s=original.trim();
- if(!s) return original;
- const parts=s.split(/\s*\/\s*/);
- if(parts.length===2 && ((thRx.test(parts[0])&&enRx.test(parts[1]))||(enRx.test(parts[0])&&thRx.test(parts[1])))){
-   const chosen=target===TH?(thRx.test(parts[0])?parts[0]:parts[1]):(enRx.test(parts[0])?parts[0]:parts[1]);
-   return original.replace(s,chosen.trim());
- }
- return null;
-}
-function translateString(original,target){
- if(!original) return original;
- const bi=bilingual(original,target); if(bi!==null) return bi;
- const lead=original.match(/^\s*/)[0], trail=original.match(/\s*$/)[0], core=original.trim();
- if(target===EN && pairs[core]) return lead+pairs[core]+trail;
- if(target===TH && reverse[core]) return lead+reverse[core]+trail;
- let out=core;
- const dict=target===EN?pairs:reverse;
- Object.keys(dict).sort((a,b)=>b.length-a.length).forEach(k=>{if(out.includes(k))out=out.split(k).join(dict[k])});
- return lead+out+trail;
-}
-function remember(el,attr,key){if(!el.dataset[key]) el.dataset[key]=el.getAttribute(attr)||''}
-function applyElement(el){
- if(!el||el.nodeType!==1||el.closest('#languageSwitcher'))return;
- ['placeholder','title','aria-label','alt'].forEach(attr=>{if(el.hasAttribute(attr)){const key='i18n'+attr.replace('-','');remember(el,attr,key);el.setAttribute(attr,translateString(el.dataset[key],lang))}});
- if(el.tagName==='INPUT'&&['button','submit','reset'].includes((el.type||'').toLowerCase())){remember(el,'value','i18nvalue');el.value=translateString(el.dataset.i18nvalue,lang)}
-}
-function applyNode(root){
- const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT); let n;
- while(n=walker.nextNode()){
-   const p=n.parentElement;if(!p||['SCRIPT','STYLE','TEXTAREA'].includes(p.tagName)||p.closest('#languageSwitcher'))continue;
-   if(n.nodeValue.trim()){if(n._i18nOriginal===undefined)n._i18nOriginal=n.nodeValue;n.nodeValue=translateString(n._i18nOriginal,lang)}
- }
- if(root.nodeType===1)applyElement(root);
- (root.querySelectorAll?root.querySelectorAll('*'):[]).forEach(applyElement);
-}
-function updateButtons(){document.documentElement.lang=lang==='th'?'th':'en';document.querySelectorAll('#languageSwitcher button').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang))}
-function setLanguage(next){lang=next;localStorage.setItem('productionLanguage',lang);observer.disconnect();applyNode(document.body);updateButtons();observer.observe(document.body,{childList:true,subtree:true});document.dispatchEvent(new CustomEvent('languagechange',{detail:{language:lang}}))}
-function install(){
- const host=document.querySelector('.top-actions')||document.querySelector('header');
- const box=document.createElement('div');box.id='languageSwitcher';box.className='lang-switch';box.setAttribute('aria-label','Language');box.innerHTML='<button type="button" data-lang="th">ไทย</button><button type="button" data-lang="en">EN</button>';
- box.addEventListener('click',e=>{const b=e.target.closest('button[data-lang]');if(b)setLanguage(b.dataset.lang)});host.insertBefore(box,host.firstChild);
- applyNode(document.body);updateButtons();observer.observe(document.body,{childList:true,subtree:true});
-}
-const observer=new MutationObserver(ms=>{observer.disconnect();ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1||n.nodeType===3)applyNode(n.nodeType===3?n.parentElement:n)}));observer.observe(document.body,{childList:true,subtree:true})});
-window.setAppLanguage=setLanguage;window.getAppLanguage=()=>lang;
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
+  function init(){
+    if(document.getElementById('safeLanguageSwitcher')) return;
+    var box=document.createElement('div');
+    box.id='safeLanguageSwitcher';
+    box.innerHTML='<button type="button" data-lang="th">ไทย</button><button type="button" data-lang="en">EN</button>';
+    document.body.appendChild(box);
+    function setLang(lang){
+      document.documentElement.lang=lang;
+      localStorage.setItem('productionLanguage',lang);
+      box.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',b.dataset.lang===lang);});
+    }
+    box.addEventListener('click',function(e){
+      var b=e.target.closest('button[data-lang]');
+      if(!b) return;
+      setLang(b.dataset.lang);
+    });
+    setLang(localStorage.getItem('productionLanguage')||'th');
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
 </script>
-
 </body></html>
 
 <!-- v58: auto update through Level 3; Level 3+ requires approval -->
