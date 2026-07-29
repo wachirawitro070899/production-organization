@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- Version 34: Exam-Skill Matrix Alignment -->
 <title>JINRONG - Production Organization System</title>
 <style>
 :root{--p:#1f4e79;--p2:#2f75b5;--bg:#f4f7fb;--card:#fff;--text:#1f2937;--muted:#6b7280;--line:#dbe3ec;--danger:#b42318}
@@ -93,7 +94,7 @@ form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}label{f
 </div>
 <div id="onlineExamArea" class="panel hidden"></div>
 <div id="onlineExamResult" class="panel hidden"></div>
-<div class="panel"><h2>Practical Test / Job Observation</h2><p class="exam-note">หัวหน้างานประเมินภาคปฏิบัติหลังผ่านข้อเขียน เกณฑ์แนะนำ: ข้อเขียน ≥ 80% และภาคปฏิบัติผ่านทุกข้อ</p><div id="practicalTestArea" class="practical-grid"></div></div>
+<div class="panel"><h2>Practical Test / Job Observation</h2><p class="exam-note">หัวหน้างานประเมินตามหัวข้อเดียวกับ Skill Matrix โดยตรง เกณฑ์: ข้อเขียน ≥ 80% และภาคปฏิบัติผ่าน จึงปรับหัวข้อนั้นเป็น Level 3</p><div id="practicalTestArea" class="practical-grid"></div></div>
 <div class="panel"><div class="exam-head"><div><h2 style="margin-bottom:5px">Exam Approval / อนุมัติผลสอบ</h2><div class="exam-note">เมื่อสั่งพิมพ์ข้อสอบ ระบบจะสร้างรายการ “รอผลสอบ” จากนั้น Admin กรอกคะแนน ผลภาคปฏิบัติ และระดับ Skill ใหม่เพื่ออนุมัติ</div></div><span id="pendingExamCount" class="status-waiting">รอผลสอบ 0 รายการ</span></div><div style="overflow:auto;margin-top:14px"><table><thead><tr><th>วันที่พิมพ์</th><th>พนักงาน</th><th>Section</th><th>ไตรมาส</th><th>Skill ปัจจุบัน</th><th>สถานะ</th><th>คะแนน</th><th>ภาคปฏิบัติ</th><th>Skill ใหม่</th><th>ผู้อนุมัติ</th><th>ดำเนินการ</th></tr></thead><tbody id="examApprovalRows"></tbody></table></div></div>
 <div class="panel"><h2>Online Exam History</h2><div style="overflow:auto"><table><thead><tr><th>วันที่</th><th>รหัส</th><th>ชื่อ</th><th>Section</th><th>ไตรมาส</th><th>คะแนน</th><th>ภาคปฏิบัติ</th><th>ผล</th><th>Level</th><th>ผู้ประเมิน</th></tr></thead><tbody id="onlineExamHistory"></tbody></table></div></div>
 </section>
@@ -2249,6 +2250,20 @@ function renderSectionChart(s){
 function renderSearch(){const q=searchInput.value.toLowerCase();const list=employees.map((e,originalIndex)=>({...e,originalIndex})).filter(e=>Object.values(e).join(' ').toLowerCase().includes(q));results.innerHTML=list.length?list.map(e=>{const key=e.docId||e.id||String(e.originalIndex);const safeKey=encodeURIComponent(key);return `<tr><td>${avatar(e,true)}</td><td>${e.id||''}</td><td>${e.name||''}</td><td>${e.phone||'-'}</td><td>${e.section||''}</td><td>${e.position||''}</td><td>${fmt(e.startDate)}</td><td>${yearsService(e.startDate)}</td><td class="admin-col ${isAdmin?'':'hidden'}"><button type="button" class="btn js-edit-employee" data-key="${safeKey}" style="margin:2px">แก้ไขข้อมูล</button><button type="button" class="btn secondary js-change-photo" data-key="${safeKey}" style="margin:2px">เปลี่ยนรูป</button><button type="button" class="btn danger js-delete-employee" data-key="${safeKey}" style="margin:2px">ลบ</button></td></tr>`;}).join(''):`<tr><td colspan="9" class="empty">ไม่พบข้อมูล</td></tr>`;}
 results.addEventListener('click',event=>{const button=event.target.closest('button[data-key]');if(!button)return;event.preventDefault();event.stopPropagation();const key=decodeURIComponent(button.dataset.key||'');if(button.classList.contains('js-edit-employee'))window.openEditEmployee(key);else if(button.classList.contains('js-change-photo'))window.chooseEmployeePhoto(key);else if(button.classList.contains('js-delete-employee'))window.removeEmp(key);});
 
+const examSkillTopics={
+"Production Manager":["Safety Leadership","KPI Management","Manpower Planning","Problem Solving","Audit Management","Training Approval"],
+"Engineering Support Section":["Safety & PPE","WI / SOP Understanding","Drawing Reading","Measuring Tool","PFMEA / Control Plan","Jig & Fixture","Machine Parameter","Problem Solving","Engineering Change"],
+"Support Production Section":["Safety & PPE","5S Ability","WI / SOP Understanding","Production Planning","Material Control","FIFO / Traceability","Document Control","ERP Data","Record Filling","Abnormal Handling"],
+"Stamping Section":["Safety & PPE","5S Ability","WI / SOP Understanding","Drawing Reading","Measuring Tool","Machine Setup","Machine Operation","First-piece Inspection","Process Quality Control","NG Identification","Upper & Lower Die Change","Record Filling","Abnormal Handling","Daily Machine Check"],
+"Welding Section":["Safety & PPE","5S Ability","WI / SOP Understanding","Drawing Reading","Measuring Tool","Jig Setup","Welding Operation","First-piece Inspection","Weld Quality Inspection","NG Identification","Electrode Check","Poka-Yoke Verification","Record Filling","Abnormal Handling","Daily Machine Check"],
+"Sorting Section":["Safety & PPE","5S Ability","WI / SOP Understanding","Boundary Sample","Visual Inspection","Measuring Tool","Defect Classification","NG Identification","Traceability","Containment","Record Filling","Abnormal Handling"],
+"CNC Section":["Safety & PPE","5S Ability","WI / SOP Understanding","Drawing Reading","Measuring Tool","Machine Setup","Program Operation","Tool Offset","Tool Change","First-piece Inspection","Process Quality Control","NG Identification","Tool Life Control","Record Filling","Troubleshooting","Daily Machine Check"],
+"Tapping Section":["Safety & PPE","5S Ability","WI / SOP Understanding","Drawing Reading","Measuring Tool","Machine Setup","Tap Change","Machine Operation","First-piece Inspection","Gauge Inspection","Thread Quality","NG Identification","Tool Life Control","Lubrication Control","Record Filling","Abnormal Handling","Daily Machine Check"],
+"Bending Section":["Safety & PPE","5S Ability","WI / SOP Understanding","Drawing Reading","Measuring Tool","Machine Setup","Die Setup","Machine Operation","First-piece Inspection","Angle Inspection","Process Quality Control","NG Identification","Springback Adjustment","Record Filling","Abnormal Handling","Daily Machine Check"],
+"Machine Maintenance Section":["Safety & PPE","LOTO","WI / SOP Understanding","PM Inspection","Lubrication","Electrical Check","Mechanical Repair","Sensor / PLC Check","Troubleshooting","Breakdown Record","Spare Parts Control","Abnormal Handling"],
+"Tooling Maintenance Section":["Safety & PPE","5S Ability","WI / SOP Understanding","Die Structure","Mold PM","Mold Repair","Grinding Standard","Polishing","Tool Measurement","Mold Assembly","Failure Analysis","Tooling Record","Abnormal Handling"]
+};
+
 const trainingCatalog={
 "Production Manager":{Q1:["KPI & Production Target Management","Leadership and Communication"],Q2:["Cost Reduction / Productivity Improvement","Risk Management"],Q3:["Internal Audit & Corrective Action","Manpower and Capacity Planning"],Q4:["Management Review","Annual KPI and Training Effectiveness Review"]},
 "Engineering Support Section":{Q1:["Drawing / Specification Reading","Process Flow and PFMEA"],Q2:["Jig, Fixture and Tooling Design","Machine Parameter Standardization"],Q3:["Problem Solving: 5 Why / Fishbone","Process Capability and Improvement"],Q4:["Engineering Change Control","Lessons Learned and Standard Revision"]},
@@ -2312,9 +2327,46 @@ Object.keys(structures).forEach(x=>onlineExamSection.add(new Option(x,x)));onlin
 function renderOnlineExamEmployees(){onlineExamEmployee.innerHTML='<option value="">เลือกพนักงาน</option>'+employees.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'')).map(e=>`<option value="${e.docId||employees.indexOf(e)}">${e.id||'-'} — ${(e.name||'').toUpperCase()} — ${e.section||'-'}</option>`).join('');}
 function currentOnlineEmployee(){const key=onlineExamEmployee.value;return configured?employees.find(x=>x.docId===key):employees[Number(key)];}
 onlineExamEmployee.onchange=()=>{const e=currentOnlineEmployee();if(e&&e.section){onlineExamSection.value=e.section;renderPracticalTest();}};onlineExamSection.onchange=renderPracticalTest;onlineExamQuarter.onchange=renderPracticalTest;
-function renderPracticalTest(){const sec=onlineExamSection.value,q=onlineExamQuarter.value,items=((trainingCatalog[sec]||{})[q]||[]);const common=q==='Q1'?['สวม PPE และปฏิบัติตาม Safety Standard','แยกงาน NG/Hold ได้ถูกต้อง']:q==='Q2'?['ปฏิบัติงาน/Setup ตาม WI','บันทึก Check Sheet หรือ OEE ถูกต้อง']:q==='Q3'?['วิเคราะห์ Abnormality และตอบสนองตาม Reaction Plan','ใช้เครื่องมือคุณภาพหรือ Poka-Yoke ได้ถูกต้อง']:['สอนงานหรืออธิบายมาตรฐานให้ผู้อื่นได้','เสนอหรือดำเนินการปรับปรุงงาน'];const list=[...items,...common];practicalTestArea.innerHTML=list.map((x,i)=>`<div class="practical-item"><b>${i+1}. ${x}</b><select class="practical-status"><option value="">ยังไม่ประเมิน</option><option value="PASS">ผ่าน</option><option value="FAIL">ไม่ผ่าน</option></select></div>`).join('');}
+function renderPracticalTest(){const sec=onlineExamSection.value;const list=examSkillTopics[sec]||[];practicalTestArea.innerHTML=`<div class="notice" style="grid-column:1/-1"><b>หัวข้อประเมินตรงกับ Skill Matrix</b><br>ข้อเขียนผ่าน = Level 2 · ข้อเขียนและภาคปฏิบัติผ่าน = Level 3 · Level 4–5 ต้องผ่านการอนุมัติจากหัวหน้างาน</div>`+list.map((x,i)=>`<div class="practical-item"><b>${i+1}. ${x}</b><select class="practical-status" data-skill-name="${encodeURIComponent(x)}"><option value="">ยังไม่ประเมิน</option><option value="PASS">ผ่าน</option><option value="FAIL">ไม่ผ่าน</option></select></div>`).join('');}
 document.getElementById('startOnlineExam').onclick=()=>{const emp=currentOnlineEmployee();if(!emp)return alert('กรุณาเลือกพนักงาน');const qs=examQuestionBank[onlineExamQuarter.value]||[];onlineExamArea.classList.remove('hidden');onlineExamResult.classList.add('hidden');document.getElementById('onlineExamStatus').textContent=`กำลังทำข้อสอบ ${onlineExamQuarter.value} · ${qs.length} ข้อ`;onlineExamArea.innerHTML=`<form id="onlineExamForm"><h3>${onlineExamQuarter.value} — ${onlineExamSection.value}</h3>${qs.map((x,i)=>`<div class="question-card"><h4>${i+1}. ${x.q}</h4>${x.c.map((c,j)=>`<label class="answer-option"><input type="radio" name="q${i}" value="${j}" required>${c}</label>`).join('')}</div>`).join('')}<button class="btn" type="submit">ส่งข้อสอบและตรวจคะแนน</button></form>`;document.getElementById('onlineExamForm').onsubmit=submitOnlineExam;onlineExamArea.scrollIntoView({behavior:'smooth'});};
-async function submitOnlineExam(ev){ev.preventDefault();const emp=currentOnlineEmployee();const qs=examQuestionBank[onlineExamQuarter.value]||[];const fd=new FormData(ev.target);let correct=0;qs.forEach((x,i)=>{if(Number(fd.get('q'+i))===x.a)correct++;});const score=Math.round(correct/qs.length*100);const practical=[...document.querySelectorAll('.practical-status')].map(x=>x.value);const practicalResult=practical.length&&practical.every(x=>x==='PASS')?'PASS':practical.some(x=>x==='FAIL')?'FAIL':'PENDING';const passed=score>=80&&practicalResult==='PASS';const level=passed?skillLevelFromScore(score):1;const evaluator=document.getElementById('onlineExamEvaluator').value.trim()||'-';const data={employeeDocId:onlineExamEmployee.value,employeeId:emp.id||'',employeeName:(emp.name||'').toUpperCase(),section:onlineExamSection.value,quarter:onlineExamQuarter.value,score,correct,total:qs.length,practicalResult,result:passed?'PASS':'RE-TRAIN',level,evaluator,date:new Date().toISOString().slice(0,10),createdAt:new Date().toISOString()};if(configured&&!isAdmin){alert('กรุณา Login ก่อนบันทึกผลสอบลงระบบ');return;}if(configured&&isAdmin){await api.addDoc(api.collection(db,'onlineExamRecords'),data);await api.addDoc(api.collection(db,'skillAssessments'),{employeeDocId:data.employeeDocId,employeeId:data.employeeId,employeeName:data.employeeName,section:data.section,position:emp.position||'',topic:`${data.quarter} Online Exam`,score:data.score,level:data.level,evaluator:data.evaluator,date:data.date,createdAt:data.createdAt});}else{onlineExamRecords.push(data);localStorage.setItem('onlineExamRecords',JSON.stringify(onlineExamRecords));}onlineExamResult.classList.remove('hidden');onlineExamResult.innerHTML=`<div class="score-box"><div>ผลสอบ ${data.quarter}</div><strong>${score}%</strong><div>${correct}/${qs.length} ข้อ</div><p class="${passed?'pass':'fail'}">${passed?'PASS — ผ่านเกณฑ์ปรับ Skill':'RE-TRAIN — ต้องอบรม/ประเมินซ้ำ'}</p><div>ภาคปฏิบัติ: ${practicalResult} · Level แนะนำ: ${level}</div></div>`;document.getElementById('onlineExamStatus').textContent=`สอบเสร็จ ${score}% · ${data.result}`;renderOnlineExamHistory();renderSkillAssessments();onlineExamResult.scrollIntoView({behavior:'smooth'});}
+async function submitOnlineExam(ev){
+ev.preventDefault();
+const emp=currentOnlineEmployee();
+const qs=examQuestionBank[onlineExamQuarter.value]||[];
+const fd=new FormData(ev.target);let correct=0;
+qs.forEach((x,i)=>{if(Number(fd.get('q'+i))===x.a)correct++;});
+const score=Math.round(correct/qs.length*100);
+const practicalRows=[...document.querySelectorAll('.practical-status')].map(x=>({skill:decodeURIComponent(x.dataset.skillName||''),status:x.value}));
+const practical=practicalRows.map(x=>x.status);
+const practicalResult=practical.length&&practical.every(x=>x==='PASS')?'PASS':practical.some(x=>x==='FAIL')?'FAIL':'PENDING';
+const writtenPassed=score>=80;
+const passed=writtenPassed&&practicalResult==='PASS';
+const level=passed?3:writtenPassed?2:1;
+const evaluator=document.getElementById('onlineExamEvaluator').value.trim()||'-';
+const now=new Date().toISOString();
+const skillResults=practicalRows.map(x=>({skill:x.skill,status:x.status,level:writtenPassed&&x.status==='PASS'?3:writtenPassed?2:1}));
+const data={employeeDocId:onlineExamEmployee.value,employeeId:emp.id||'',employeeName:(emp.name||'').toUpperCase(),section:onlineExamSection.value,quarter:onlineExamQuarter.value,score,correct,total:qs.length,practicalResult,result:passed?'PASS':'RE-TRAIN',level,evaluator,date:now.slice(0,10),createdAt:now,skillResults};
+if(configured&&!isAdmin){alert('กรุณา Login ก่อนบันทึกผลสอบลงระบบ');return;}
+const updatedLevels={...employeeSkillLevels(emp)};
+skillResults.forEach(x=>{if(x.skill)updatedLevels[x.skill]=x.level;});
+Object.assign(emp,{skillLevels:updatedLevels,currentSkillLevel:Math.max(...Object.values(updatedLevels).map(Number)),skillUpdatedAt:now,skillApprovedBy:evaluator});
+if(configured&&isAdmin){
+ await api.addDoc(api.collection(db,'onlineExamRecords'),data);
+ for(const x of skillResults){await api.addDoc(api.collection(db,'skillAssessments'),{employeeDocId:data.employeeDocId,employeeId:data.employeeId,employeeName:data.employeeName,section:data.section,position:emp.position||'',topic:x.skill,score:data.score,practicalResult:x.status,result:x.level>=3?'PASS':x.level===2?'WRITTEN PASS':'RE-TRAIN',level:x.level,evaluator:data.evaluator,date:data.date,createdAt:data.createdAt});}
+ const docId=String(emp.docId||emp.id||'').replace(/[^A-Za-z0-9_-]/g,'_');
+ if(docId)await api.setDoc(api.doc(db,'employees',docId),{...emp,docId},{merge:true});
+}else{
+ onlineExamRecords.push(data);localStorage.setItem('onlineExamRecords',JSON.stringify(onlineExamRecords));
+ skillResults.forEach(x=>skillAssessments.push({employeeId:data.employeeId,employeeName:data.employeeName,section:data.section,topic:x.skill,score:data.score,practicalResult:x.status,result:x.level>=3?'PASS':x.level===2?'WRITTEN PASS':'RE-TRAIN',level:x.level,evaluator:data.evaluator,date:data.date,createdAt:data.createdAt}));
+ localStorage.setItem('skillAssessments',JSON.stringify(skillAssessments));
+ localStorage.setItem('productionEmployees',JSON.stringify(employees));
+}
+onlineExamResult.classList.remove('hidden');
+onlineExamResult.innerHTML=`<div class="score-box"><div>ผลสอบ ${data.quarter}</div><strong>${score}%</strong><div>${correct}/${qs.length} ข้อ</div><p class="${passed?'pass':'fail'}">${passed?'PASS — อัปเดต Skill Matrix เป็น Level 3':'RE-TRAIN / รอภาคปฏิบัติ'}</p><div>ภาคปฏิบัติ: ${practicalResult} · ระดับที่อัปเดต: Level ${level}</div><div style="margin-top:8px;font-size:13px">Level 4–5 ต้องประเมินความสามารถทำงานอิสระ/สอนงานและได้รับอนุมัติ</div></div>`;
+document.getElementById('onlineExamStatus').textContent=`สอบเสร็จ ${score}% · ${data.result}`;
+renderOnlineExamHistory();renderSkillAssessments();renderSectionSkillMatrix();renderSkillCardPreview();
+onlineExamResult.scrollIntoView({behavior:'smooth'});
+}
 function renderOnlineExamHistory(){const list=onlineExamRecords.slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));onlineExamHistory.innerHTML=list.length?list.map(x=>`<tr><td>${fmt(x.date)}</td><td>${x.employeeId||'-'}</td><td>${(x.employeeName||'-').toUpperCase()}</td><td>${x.section||'-'}</td><td>${x.quarter||'-'}</td><td>${x.score}%</td><td>${x.practicalResult||'-'}</td><td class="${x.result==='PASS'?'pass':'fail'}">${x.result||'-'}</td><td>Level ${x.level||'-'}</td><td>${x.evaluator||'-'}</td></tr>`).join(''):'<tr><td colspan="10" class="empty">ยังไม่มีประวัติการสอบออนไลน์</td></tr>';}
 renderPracticalTest();
 
@@ -2334,19 +2386,7 @@ examDate.value=new Date().toISOString().slice(0,10);
 
 
 // ===== v15 SECTION SKILL MATRIX + SKILL CARD =====
-const sectionSkills={
-"Production Manager":["Safety Leadership","KPI Management","Manpower Planning","Problem Solving","Audit Management","Training Approval"],
-"Engineering Support Section":["5S / Safety","Drawing Reading","PFMEA / Control Plan","Jig & Fixture","Machine Parameter","Problem Solving","Engineering Change"],
-"Support Production Section":["5S / Safety","Production Planning","Material Control","FIFO / Traceability","Document Control","ERP Data","Delivery Management"],
-"Stamping Section":["5S Ability","Drawing Reading","First-piece Inspection","Measuring Tool","Machine Operation","Upper & Lower Die Change","Exception Handling","Record Filling"],
-"Welding Section":["5S / Safety","Drawing Reading","Jig Setup","Welding Operation","Quality Inspection","Electrode Check","Poka-Yoke","Abnormal Response"],
-"Sorting Section":["5S / Safety","Boundary Sample","Visual Inspection","Measuring Tool","Defect Classification","Traceability","Containment","Record Filling"],
-"CNC Section":["5S / Safety","Drawing Reading","Measuring Tool","Program Operation","Tool Offset","First-piece Inspection","Tool Life","Troubleshooting"],
-"Tapping Section":["5S / Safety","Drawing Reading","Machine Setup","Gauge Inspection","Thread Quality","Tool Life","Lubrication","Abnormal Response"],
-"Bending Section":["5S / Safety","Drawing Reading","Die Setup","Angle Measurement","Machine Operation","First-piece Inspection","Springback Control","Abnormal Response"],
-"Machine Maintenance Section":["LOTO / Safety","PM Standard","Electrical Check","Mechanical Repair","Sensor / PLC","Troubleshooting","Breakdown Record","Spare Parts"],
-"Tooling Maintenance Section":["Tooling Safety","Die Structure","PM Die","Grinding Standard","Tool Measurement","Repair Skill","Failure Analysis","Tooling Record"]
-};
+const sectionSkills=examSkillTopics;
 const skillSections=Object.keys(sectionSkills);
 function isoDate(d){return d.toISOString().slice(0,10)}
 function addMonthsISO(dateStr,months){const d=dateStr?new Date(dateStr+'T00:00:00'):new Date();if(isNaN(d))return isoDate(new Date());d.setMonth(d.getMonth()+months);return isoDate(d)}
@@ -2388,29 +2428,55 @@ function addUniversalPrintButtons(){const map=[['section','พิมพ์ Secti
 addUniversalPrintButtons();
 
 const pageDownloadNames={organization:'Organization_Chart',section:'Section_Employee_List',sectionChart:'Section_Organization_Chart',add:'Add_Employee_Form',search:'Employee_Search_List',training:'Training_Plan',onlineExam:'Online_Examination',sectionSkillMatrix:'Section_Skill_Matrix',skillCards:'Employee_Skill_Card',skillMatrix:'Skill_Matrix_Examination',exportCenter:'Export_Center'};
-function downloadPageToComputer(pageId){
-  // ใช้รูปแบบเดียวกับคำสั่งพิมพ์ เพื่อให้ PDF แสดงเฉพาะเอกสาร ไม่ติดเมนูหรือปุ่มบนหน้าจอ
-  if(pageId==='organization') return printReport('print-organization');
-  if(pageId==='sectionSkillMatrix') return buildSectionSkillPrint(false);
-  if(pageId==='skillCards') return printCards(false);
-  if(pageId==='onlineExam') return createPendingExamAndPrint();
-
-  const page=document.getElementById(pageId);
-  if(!page)return;
-  const titles={
-    section:'SECTION EMPLOYEE LIST',
-    sectionChart:'SECTION ORGANIZATION CHART',
-    add:'EMPLOYEE FORM',
-    search:'EMPLOYEE LIST',
-    training:'TRAINING PLAN',
-    skillMatrix:'SKILL ASSESSMENT RECORDS',
-    exportCenter:'EXPORT CENTER'
-  };
-  const clone=page.cloneNode(true);
-  clone.querySelectorAll('.no-print,.page-download-button,.universal-print,button').forEach(el=>el.remove());
-  printGeneric(titles[pageId]||pageDownloadNames[pageId]||pageId,clone.innerHTML);
+function pdfSafeName(v){return String(v||'Document').trim().replace(/[^A-Za-z0-9ก-๙_-]+/g,'_').replace(/^_+|_+$/g,'')||'Document'}
+async function downloadPrintNodePdf(node,fileName,orientation='landscape'){
+  if(!node)return alert('ไม่พบเอกสารสำหรับดาวน์โหลด');
+  if(!window.html2canvas||!window.jspdf)return alert('กำลังโหลดระบบ PDF กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่');
+  const stage=document.createElement('div');
+  stage.style.cssText='position:fixed;left:-100000px;top:0;z-index:-1;background:#fff;color:#111;padding:24px;width:'+(orientation==='landscape'?'1120px':'790px')+';height:auto;overflow:visible';
+  const copy=node.cloneNode(true);
+  copy.style.display='block';copy.classList.remove('page');copy.classList.add('active');
+  copy.querySelectorAll('.no-print,.page-download-button,.universal-print,button').forEach(el=>el.remove());
+  copy.querySelectorAll('select').forEach((s,i)=>{const src=node.querySelectorAll('select')[i];if(src)s.value=src.value});
+  copy.querySelectorAll('input').forEach((inp,i)=>{const src=node.querySelectorAll('input')[i];if(src){inp.value=src.value;if(src.checked)inp.setAttribute('checked','checked')}});
+  stage.appendChild(copy);document.body.appendChild(stage);
+  const status=document.getElementById('localAutoSaveStatus');
+  try{
+    if(status){status.textContent='กำลังสร้าง PDF...';status.style.display='block'}
+    await new Promise(r=>setTimeout(r,180));
+    const canvas=await html2canvas(stage,{scale:1.65,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',logging:false,windowWidth:stage.scrollWidth,windowHeight:stage.scrollHeight});
+    const {jsPDF}=window.jspdf;const pdf=new jsPDF({orientation,unit:'mm',format:'a4'});
+    const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight(),margin=7,maxW=pw-margin*2,maxH=ph-margin*2;
+    const imgW=maxW,imgH=canvas.height*imgW/canvas.width;
+    const pageCanvas=document.createElement('canvas'),ctx=pageCanvas.getContext('2d');
+    const sourcePageH=Math.max(1,Math.floor(canvas.width*maxH/maxW));
+    let y=0,page=0;
+    while(y<canvas.height){
+      const sliceH=Math.min(sourcePageH,canvas.height-y);pageCanvas.width=canvas.width;pageCanvas.height=sliceH;
+      ctx.fillStyle='#fff';ctx.fillRect(0,0,pageCanvas.width,pageCanvas.height);ctx.drawImage(canvas,0,y,canvas.width,sliceH,0,0,canvas.width,sliceH);
+      const h=sliceH*imgW/canvas.width;if(page++)pdf.addPage('a4',orientation);
+      pdf.addImage(pageCanvas.toDataURL('image/jpeg',0.94),'JPEG',margin,margin,imgW,h,'','FAST');y+=sliceH;
+    }
+    pdf.save(pdfSafeName(fileName)+'.pdf');
+    if(status){status.textContent='✓ ดาวน์โหลด PDF ลงเครื่องแล้ว';setTimeout(()=>status.style.display='none',1800)}
+  }catch(err){console.error(err);alert('ไม่สามารถสร้าง PDF ได้: '+(err?.message||err));}
+  finally{stage.remove()}
 }
-function addDownloadButtonEveryPage(){document.querySelectorAll('main .page').forEach(page=>{if(page.querySelector('.page-download-button'))return;const wrap=document.createElement('div');wrap.className='report-actions no-print';wrap.style.cssText='display:flex;justify-content:flex-end;margin-bottom:10px';const b=document.createElement('button');b.type='button';b.className='btn page-download-button';b.textContent='⬇️ ดาวน์โหลด PDF (แบบพิมพ์)';b.onclick=()=>downloadPageToComputer(page.id);wrap.appendChild(b);page.prepend(wrap)})}
+async function downloadPageToComputer(pageId){
+  let node=null,name=pageDownloadNames[pageId]||pageId,orientation='landscape';
+  if(pageId==='organization'){buildOrganizationPrintReport();node=document.getElementById('organizationPrintReport');name='Organization_Chart'}
+  else if(pageId==='sectionSkillMatrix'){const sec=smSection.value;document.getElementById('sectionSkillPrintReport').innerHTML=skillMatrixHTML(sec,employees.filter(e=>normalizedSection(e.section)===normalizedSection(sec)),false);node=document.getElementById('sectionSkillPrintReport');name=sec+'_Skill_Matrix'}
+  else if(pageId==='skillCards'){const emp=getCardEmployee();if(!emp)return alert('กรุณาเลือกพนักงาน');document.getElementById('skillCardPrintReport').innerHTML=`<div class="skill-card-grid">${skillCardHTML(emp)}</div>`;node=document.getElementById('skillCardPrintReport');name='Skill_Card_'+(emp.id||emp.name)}
+  else{
+    const page=document.getElementById(pageId);if(!page)return;
+    const titles={section:'SECTION EMPLOYEE LIST',sectionChart:'SECTION ORGANIZATION CHART',add:'EMPLOYEE FORM',search:'EMPLOYEE LIST',training:'TRAINING PLAN',onlineExam:'ONLINE EXAMINATION',skillMatrix:'SKILL ASSESSMENT RECORDS',exportCenter:'EXPORT CENTER'};
+    const clone=page.cloneNode(true);clone.querySelectorAll('.no-print,.page-download-button,.universal-print,button').forEach(el=>el.remove());
+    document.getElementById('genericPrintReport').innerHTML=`<div class="report-header"><h1>${titles[pageId]||name}</h1><div>วันที่พิมพ์ ${new Date().toLocaleDateString('th-TH')}</div></div>${clone.innerHTML}`;
+    node=document.getElementById('genericPrintReport');
+  }
+  await downloadPrintNodePdf(node,name,orientation);
+}
+function addDownloadButtonEveryPage(){document.querySelectorAll('main .page').forEach(page=>{if(page.querySelector('.page-download-button'))return;const wrap=document.createElement('div');wrap.className='report-actions no-print';wrap.style.cssText='display:flex;justify-content:flex-end;margin-bottom:10px';const b=document.createElement('button');b.type='button';b.className='btn page-download-button';b.textContent='⬇️ ดาวน์โหลด PDF ลงเครื่อง';b.onclick=()=>downloadPageToComputer(page.id);wrap.appendChild(b);page.prepend(wrap)})}
 addDownloadButtonEveryPage();
 const oldRenderAll=renderAll;renderAll=function(){oldRenderAll();renderSectionSkillMatrix();refreshSkillCardEmployees()};
 
