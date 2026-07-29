@@ -127,7 +127,7 @@ body.employee-exam-mode .employee-portal-only{display:inline-flex!important}
 <section id="training" class="page"><div class="panel"><h2>Quarterly Training Plan</h2><div class="sort-controls"><label>Section<select id="trainingSection"></select></label><label>ไตรมาส<select id="trainingQuarter"><option value="Q1">Q1 ม.ค.–มี.ค.</option><option value="Q2">Q2 เม.ย.–มิ.ย.</option><option value="Q3">Q3 ก.ค.–ก.ย.</option><option value="Q4">Q4 ต.ค.–ธ.ค.</option></select></label></div><div id="trainingPlanArea"></div></div><div class="panel"><h2>Annual Training</h2><div id="annualTrainingArea"></div></div></section>
 <section id="onlineExam" class="page">
 <div class="panel">
-<div class="exam-head"><div><h2 style="margin-bottom:5px">Online Examination Q1–Q4</h2><div class="exam-note">ระบบ Fix ชุดข้อสอบตาม Skill Level ปัจจุบัน และอัปเดตคะแนน/ระดับใน Skill Matrix อัตโนมัติเมื่อสอบผ่าน</div></div><div class="exam-progress" id="onlineExamStatus">ยังไม่ได้เริ่มสอบ</div></div>
+<div class="exam-head"><div><h2 style="margin-bottom:5px">Online Examination Q1–Q4</h2><div class="exam-note">ระบบ Fix ชุดข้อสอบตาม Skill Level ปัจจุบัน: Level 1–2 ปรับถึง Level 3 อัตโนมัติ ส่วน Level 3 ขึ้นไปต้องรออนุมัติ</div></div><div class="exam-progress" id="onlineExamStatus">ยังไม่ได้เริ่มสอบ</div></div>
 <div class="sort-controls" style="margin-top:15px">
 <label>พนักงาน<select id="onlineExamEmployee"></select></label>
 <label>Section<select id="onlineExamSection"></select></label>
@@ -159,7 +159,7 @@ body.employee-exam-mode .employee-portal-only{display:inline-flex!important}
   </div>
   <div class="panel"><div id="skillCardPreview"></div></div>
 </section>
-<section id="skillMatrix" class="page"><div class="report-actions no-print"><button id="printSkillMatrixBtn" class="btn secondary">พิมพ์ข้อสอบ + Skill Matrix / บันทึก PDF</button></div><div class="panel"><h2>Skill Matrix Examination</h2><p style="color:var(--muted)">บันทึกผลสอบเพื่อปรับระดับ Skill Matrix ของพนักงาน</p><form id="skillExamForm"><div><label>พนักงาน<select id="examEmployee" required></select></label></div><div><label>หัวข้อทักษะ<select id="examTopic" required><option value="">เลือกหัวข้อทักษะ</option></select></label></div><div><label>คะแนน<input id="examScore" type="number" min="0" max="100" required></label></div><div><label>ผู้ประเมิน<select id="examEvaluator" required><option value="">เลือกผู้ประเมิน</option></select></label></div><div><label>วันที่ประเมิน<input id="examDate" type="date" required></label></div><div><label>ระดับใหม่<select id="examLevel"><option value="auto">คำนวณจากคะแนนอัตโนมัติ</option><option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option><option value="4">Level 4</option><option value="5">Level 5</option></select></label></div><div class="full"><button class="btn admin-only hidden" type="submit">บันทึกผลสอบ</button><div id="examViewerNote" class="notice">ผู้เข้าชมสามารถดูผลได้ แต่ต้อง Login เป็น Admin เพื่อบันทึก</div></div></form></div><div class="panel"><h2>Assessment Records</h2><div style="overflow:auto"><table><thead><tr><th>วันที่</th><th>รหัส</th><th>ชื่อ</th><th>Section</th><th>หัวข้อ</th><th>คะแนน</th><th>ผล</th><th>Skill Level</th><th>ผู้ประเมิน</th></tr></thead><tbody id="examResults"></tbody></table></div></div></section>
+<section id="skillMatrix" class="page"><div class="panel"><div class="exam-head"><div><h2 style="margin:0 0 5px">Level 3+ Approval Queue</h2><div class="exam-note">Level 1 และ Level 2 ที่สอบผ่านจะอัปเดตคะแนนและระดับใน Skill Matrix อัตโนมัติ ส่วนการเลื่อนจาก Level 3 ขึ้นไปต้องรออนุมัติในหน้านี้</div></div><div id="pendingLevel3Count" class="status-waiting">รออนุมัติ 0 รายการ</div></div></div><div class="panel"><div style="overflow:auto"><table><thead><tr><th>วันที่</th><th>รหัส / ชื่อ</th><th>Section</th><th>หัวข้อทักษะ</th><th>คะแนน</th><th>ระดับเดิม</th><th>ระดับเป้าหมาย</th><th>ผู้ทดสอบ</th><th>ผู้อนุมัติ</th><th>ดำเนินการ</th></tr></thead><tbody id="examResults"></tbody></table></div></div></section>
 </main></div>
 <section id="organizationPrintReport" class="print-report"></section>
 <section id="examSkillPrintReport" class="print-report"></section><section id="sectionSkillPrintReport" class="print-report"></section><section id="skillCardPrintReport" class="print-report"></section><section id="genericPrintReport" class="print-report"></section>
@@ -2386,7 +2386,9 @@ function employeeBaselineLevel(emp){const vals=Object.values(employeeSkillLevels
 function employeeExamRequirement(emp){if(!emp)return null;const oldLevel=employeeBaselineLevel(emp),rule=examLevelRules[oldLevel]||examLevelRules[1],dates=skillDates(emp),skills=employeeSkillLevels(emp),topics=Object.entries(skills).filter(([,v])=>Number(v)===oldLevel).map(([k])=>k),hasPreviousReview=!!emp.skillUpdatedAt;return {oldLevel,targetLevel:rule.target,quarter:rule.quarter,setName:rule.name,dueDate:hasPreviousReview?dates.next:isoDate(new Date()),days:hasPreviousReview?dates.days:0,isDue:!hasPreviousReview||dates.days<=0,topics:topics.length?topics:Object.keys(skills),hasPreviousReview};}
 function renderOnlineExamEmployees(){const section=onlineExamSection.value;const previous=onlineExamEmployee.value;const list=employees.filter(e=>!section||normalizedSection(e.section)===normalizedSection(section)).sort((a,b)=>(a.name||'').localeCompare(b.name||''));onlineExamEmployee.innerHTML='<option value="">เลือกพนักงาน ('+list.length+' คน)</option>'+list.map(e=>`<option value="${e.docId||employees.indexOf(e)}">${e.id||'-'} — ${(e.name||'').toUpperCase()}</option>`).join('');if([...onlineExamEmployee.options].some(o=>o.value===previous))onlineExamEmployee.value=previous;else onlineExamEmployee.value='';onlineExamEmployee.disabled=false;}
 function currentOnlineEmployee(){
-  if(document.body.classList.contains('employee-exam-mode')&&window.currentPortalEmployee)return window.currentPortalEmployee;
+  // Employee portal must always use the employee who entered the portal.
+  // Do not depend on the dropdown value because the option value may be a Firestore docId.
+  if(window.currentPortalEmployee)return window.currentPortalEmployee;
   return resolveEmployee(onlineExamEmployee.value);
 }
 function refreshExamLock(){
@@ -2404,47 +2406,120 @@ function refreshExamLock(){
 }
 onlineExamEmployee.onchange=refreshExamLock;onlineExamSection.onchange=()=>{renderOnlineExamEmployees();refreshExamLock();renderPracticalTest();};onlineExamQuarter.onchange=()=>{refreshExamLock();renderPracticalTest();};
 function renderPracticalTest(){const emp=currentOnlineEmployee(),sec=emp?.section||onlineExamSection.value,r=employeeExamRequirement(emp);const list=emp?(r?.topics||[]):(examSkillTopics[sec]||[]);practicalTestArea.innerHTML=`<div class="notice" style="grid-column:1/-1"><b>Practical Test / Job Observation</b><br>${emp?'ประเมินเฉพาะหัวข้อระดับปัจจุบัน คะแนนจะบันทึกอัตโนมัติ ส่วนระดับต้องรอผู้ประเมินอนุมัติ':'เลือกพนักงานเพื่อแสดงหัวข้อที่ต้องประเมิน'}</div>`+list.map((x,i)=>`<div class="practical-item"><b>${i+1}. ${x}</b><select class="practical-status" data-skill-name="${encodeURIComponent(x)}"><option value="">ยังไม่ประเมิน</option><option value="PASS">ผ่าน</option><option value="FAIL">ไม่ผ่าน</option></select></div>`).join('');}
-document.getElementById('startOnlineExam').onclick=()=>{const emp=currentOnlineEmployee();if(!emp)return alert('กรุณาเลือกพนักงาน');const r=employeeExamRequirement(emp),employeeMode=document.body.classList.contains('employee-exam-mode'),q=employeeMode?r.quarter:(onlineExamQuarter.value||r.quarter),qs=examQuestionBank[q]||[];if(employeeMode)onlineExamQuarter.value=q;onlineExamArea.classList.remove('hidden');onlineExamResult.classList.add('hidden');document.getElementById('onlineExamStatus').textContent=`กำลังทำ ${q} · ${qs.length} ข้อ`;onlineExamArea.innerHTML=`<form id="onlineExamForm"><h3>${q} — Online Examination</h3><div class="notice"><b>${emp.id||'-'} — ${(emp.name||'').toUpperCase()}</b><br>ชุดข้อสอบถูก Fix ตาม Skill Level ปัจจุบัน: Level ${r.oldLevel} → Level ${r.targetLevel}</div>${qs.map((x,i)=>`<div class="question-card"><h4>${i+1}. ${x.q}</h4>${x.c.map((c,j)=>`<label class="answer-option"><input type="radio" name="q${i}" value="${j}" required>${c}</label>`).join('')}</div>`).join('')}<button class="btn" type="submit">ส่งข้อสอบและตรวจคะแนน</button></form>`;document.getElementById('onlineExamForm').onsubmit=submitOnlineExam;onlineExamArea.scrollIntoView({behavior:'smooth'});};
-async function submitOnlineExam(ev){
-ev.preventDefault();
-const emp=currentOnlineEmployee();
-const requirement=employeeExamRequirement(emp);
-if(!requirement){alert('ไม่พบข้อมูลระดับ Skill ของพนักงาน');return;}
-const qs=examQuestionBank[requirement.quarter]||[];
-const fd=new FormData(ev.target);let correct=0;
-qs.forEach((x,i)=>{if(Number(fd.get('q'+i))===x.a)correct++;});
-const score=Math.round(correct/qs.length*100);
-const practicalRows=[...document.querySelectorAll('.practical-status')].map(x=>({skill:decodeURIComponent(x.dataset.skillName||''),status:x.value}));
-const practical=practicalRows.map(x=>x.status);
-const practicalResult=practical.length&&practical.every(x=>x==='PASS')?'PASS':practical.some(x=>x==='FAIL')?'FAIL':'PENDING';
-const writtenPassed=score>=80;
-const passed=writtenPassed&&practicalResult==='PASS';
-const level=requirement.oldLevel;
-const evaluator=document.getElementById('onlineExamEvaluator').value.trim()||'-';
-const now=new Date().toISOString();
-const skillResults=practicalRows.map(x=>({skill:x.skill,status:x.status,oldLevel:Number(employeeSkillLevels(emp)[x.skill]||requirement.oldLevel),level:Number(employeeSkillLevels(emp)[x.skill]||requirement.oldLevel)}));
-const data={employeeDocId:employeeStorageKey(emp,onlineExamEmployee.value),employeeId:emp.id||'',employeeName:(emp.name||'').toUpperCase(),section:emp.section||onlineExamSection.value,quarter:requirement.quarter,examSet:(examLevelRules[requirement.oldLevel]?.name||quarter+' Examination'),oldSkillLevel:requirement.oldLevel,targetSkillLevel:requirement.targetLevel,dueDate:requirement.dueDate,lockedTopics:requirement.topics,score,correct,total:qs.length,practicalResult,result:passed?'PASS':'RE-TRAIN',level,evaluator,date:now.slice(0,10),createdAt:now,skillResults};
-if(configured&&!isAdmin){alert('กรุณา Login ก่อนบันทึกผลสอบลงระบบ');return;}
-const previousLevels={...employeeSkillLevels(emp)},updatedLevels={...previousLevels},updatedScores={...(emp.skillScores||{})};
-skillResults.forEach(x=>{if(x.skill)updatedScores[x.skill]=score;});
-Object.assign(emp,{skillScores:updatedScores,lastExamScore:score,lastExamAt:now,lastExamStatus:passed?'WAITING_APPROVAL':'RE_TEST'});
-if(false&&passed&&requirement.targetLevel>=4){const assignment={employeeDocId:employeeStorageKey(emp,onlineExamEmployee.value),employeeId:emp.id||'',employeeName:(emp.name||'').toUpperCase(),section:emp.section||'',quarter:requirement.quarter,examSet:(examLevelRules[requirement.oldLevel]?.name||quarter+' Examination'),currentSkillLevel:requirement.oldLevel,targetSkillLevel:requirement.targetLevel,lockedTopics:requirement.topics,baselineSkillLevels:employeeSkillLevels(emp),score,practicalResult,status:'WAITING_RESULT',printedAt:now,printedDate:now.slice(0,10),source:'ONLINE_LOCKED_EXAM',createdBy:evaluator};if(configured&&isAdmin)await api.addDoc(api.collection(db,'examAssignments'),assignment);else{assignment.docId='local-'+Date.now();examAssignments.push(assignment);localStorage.setItem('examAssignments',JSON.stringify(examAssignments));}}
-if(configured&&isAdmin){
- await api.addDoc(api.collection(db,'onlineExamRecords'),data);
- for(const x of skillResults){await api.addDoc(api.collection(db,'skillAssessments'),{employeeDocId:data.employeeDocId,employeeId:data.employeeId,employeeName:data.employeeName,section:data.section,position:emp.position||'',topic:x.skill,score:data.score,practicalResult:x.status,result:x.level>=3?'PASS':x.level===2?'WRITTEN PASS':'RE-TRAIN',level:x.level,evaluator:data.evaluator,date:data.date,createdAt:data.createdAt});}
- const docId=String(emp.docId||emp.id||'').replace(/[^A-Za-z0-9_-]/g,'_');
- if(docId)await api.setDoc(api.doc(db,'employees',docId),{...emp,docId},{merge:true});
-}else{
- onlineExamRecords.push(data);localStorage.setItem('onlineExamRecords',JSON.stringify(onlineExamRecords));
- skillResults.forEach(x=>skillAssessments.push({employeeId:data.employeeId,employeeName:data.employeeName,section:data.section,topic:x.skill,score:data.score,practicalResult:x.status,result:x.level>=3?'PASS':x.level===2?'WRITTEN PASS':'RE-TRAIN',level:x.level,evaluator:data.evaluator,date:data.date,createdAt:data.createdAt}));
- localStorage.setItem('skillAssessments',JSON.stringify(skillAssessments));
- localStorage.setItem('productionEmployees',JSON.stringify(employees));
+function startOnlineExamination(){
+  try{
+    const emp=window.currentPortalEmployee||currentOnlineEmployee();
+    if(!emp){alert('ไม่พบข้อมูลพนักงาน กรุณาออกแล้วเข้าสู่หน้าทดสอบใหม่');return;}
+    let r=null;
+    try{r=employeeExamRequirement(emp);}catch(err){console.warn('Skill requirement fallback:',err);}
+    if(!r){
+      const oldLevel=Math.max(1,Math.min(5,Number(emp.currentSkillLevel||emp.skillLevel||1)||1));
+      const rule=examLevelRules[oldLevel]||examLevelRules[1];
+      r={oldLevel,targetLevel:rule.target,quarter:rule.quarter,setName:rule.name,topics:[]};
+    }
+    const employeeMode=document.body.classList.contains('employee-exam-mode')||!!window.currentPortalEmployee;
+    const q=employeeMode?r.quarter:(onlineExamQuarter.value||r.quarter||'Q1');
+    const qs=examQuestionBank[q]||examQuestionBank.Q1||[];
+    if(!qs.length){alert('ยังไม่มีข้อสอบสำหรับ '+q);return;}
+    if(employeeMode&&onlineExamQuarter)onlineExamQuarter.value=q;
+    onlineExamArea.classList.remove('hidden');
+    onlineExamResult.classList.add('hidden');
+    document.getElementById('onlineExamStatus').textContent=`กำลังทำ ${q} · ${qs.length} ข้อ`;
+    onlineExamArea.innerHTML=`<form id="onlineExamForm"><h3>${q} — Online Examination</h3><div class="notice"><b>${emp.id||emp.employeeId||'-'} — ${(emp.name||'').toUpperCase()}</b><br>ชุดข้อสอบตาม Skill Level ปัจจุบัน: Level ${r.oldLevel} → Level ${r.targetLevel}</div>${qs.map((x,i)=>`<div class="question-card"><h4>${i+1}. ${x.q}</h4>${x.c.map((c,j)=>`<label class="answer-option"><input type="radio" name="q${i}" value="${j}">${c}</label>`).join('')}</div>`).join('')}<button id="submitOnlineExamBtn" class="btn" type="button">ส่งข้อสอบและตรวจคะแนน</button></form>`;
+    const form=document.getElementById('onlineExamForm');
+    const submitExamBtn=document.getElementById('submitOnlineExamBtn');
+    if(form)form.onsubmit=submitOnlineExam;
+    if(submitExamBtn)submitExamBtn.onclick=()=>submitOnlineExam({preventDefault(){},target:form,submitter:submitExamBtn});
+    onlineExamArea.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(err){
+    console.error('Start examination error:',err);
+    alert('ไม่สามารถเปิดข้อสอบได้: '+(err.message||err));
+  }
 }
-onlineExamResult.classList.remove('hidden');
-onlineExamResult.innerHTML=`<div class="score-box"><div>ผลสอบ ${data.examSet}</div><strong>${score}%</strong><div>${correct}/${qs.length} ข้อ</div><p class="${passed?'pass':'fail'}">${passed?'PASS — บันทึกคะแนนแล้ว และรอผู้ประเมินอนุมัติระดับ':'RE-TRAIN — Skill Level ยังคง Level '+requirement.oldLevel}</p><div>ภาคปฏิบัติ: ${practicalResult} · Skill เดิม: Level ${requirement.oldLevel} · เป้าหมาย: Level ${requirement.targetLevel}</div><div style="margin-top:8px;font-size:13px">ระบบอัปเดตคะแนนใน Skill Matrix แล้ว แต่จะยังไม่เปลี่ยน Skill Level จนกว่าผู้ประเมินจะอนุมัติ</div></div>`;
-document.getElementById('onlineExamStatus').textContent=`สอบเสร็จ ${score}% · ${data.result}`;
-renderOnlineExamHistory();renderSkillAssessments();renderSectionSkillMatrix();renderSkillCardPreview();
-onlineExamResult.scrollIntoView({behavior:'smooth'});
+window.startOnlineExamination=startOnlineExamination;
+document.getElementById('startOnlineExam').onclick=startOnlineExamination;
+async function submitOnlineExam(ev){
+  ev.preventDefault();
+  const submitBtn=ev.submitter||ev.target.querySelector('button[type="submit"]');
+  if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='กำลังตรวจคะแนน...';}
+  try{
+    const emp=window.currentPortalEmployee||currentOnlineEmployee();
+    if(!emp){alert('ไม่พบข้อมูลพนักงาน กรุณาออกจากหน้าสอบแล้วเข้าสู่ระบบใหม่');return;}
+    let requirement=null;
+    try{requirement=employeeExamRequirement(emp);}catch(err){console.warn('Requirement fallback:',err);}
+    if(!requirement){
+      const oldLevel=Math.max(1,Math.min(5,Number(emp.currentSkillLevel||emp.skillLevel||1)||1));
+      const rule=examLevelRules[oldLevel]||examLevelRules[1];
+      requirement={oldLevel,targetLevel:rule.target,quarter:rule.quarter,dueDate:'',topics:[]};
+    }
+    const employeeMode=document.body.classList.contains('employee-exam-mode')||!!window.currentPortalEmployee;
+    const quarter=employeeMode?requirement.quarter:(onlineExamQuarter.value||requirement.quarter||'Q1');
+    const qs=examQuestionBank[quarter]||examQuestionBank.Q1||[];
+    if(!qs.length){alert('ไม่พบชุดข้อสอบสำหรับ '+quarter);return;}
+    const fd=new FormData(ev.target);let correct=0,answered=0;
+    qs.forEach((x,i)=>{const v=fd.get('q'+i);if(v!==null){answered++;if(Number(v)===Number(x.a))correct++;}});
+    if(answered<qs.length){
+      const missing=[];
+      qs.forEach((x,i)=>{if(fd.get('q'+i)===null)missing.push(i+1);});
+      alert('กรุณาตอบคำถามให้ครบทุกข้อ\nข้อที่ยังไม่ได้ตอบ: '+missing.join(', '));
+      const firstMissing=ev.target.querySelector('input[name="q'+(missing[0]-1)+'"]');
+      if(firstMissing)firstMissing.closest('.question-card')?.scrollIntoView({behavior:'smooth',block:'center'});
+      return;
+    }
+    const score=Math.round(correct/qs.length*100);
+    const practicalRows=[...document.querySelectorAll('.practical-status')].map(x=>({skill:decodeURIComponent(x.dataset.skillName||''),status:x.value}));
+    const practical=practicalRows.map(x=>x.status).filter(Boolean);
+    const practicalResult=!practicalRows.length?'PENDING':(practical.length===practicalRows.length&&practical.every(x=>x==='PASS')?'PASS':practical.some(x=>x==='FAIL')?'FAIL':'PENDING');
+    const writtenPassed=score>=80;
+    const passed=writtenPassed&&practicalResult==='PASS';
+    const evaluator=document.getElementById('onlineExamEvaluator')?.value?.trim()||'Employee Self Test';
+    const now=new Date().toISOString();
+    const levels=employeeSkillLevels(emp);
+    const topics=(requirement.topics&&requirement.topics.length?requirement.topics:practicalRows.map(x=>x.skill)).filter(Boolean);
+    const skillResults=topics.map(skill=>({skill,status:(practicalRows.find(x=>x.skill===skill)||{}).status||'PENDING',oldLevel:Number(levels[skill]||requirement.oldLevel),level:Number(levels[skill]||requirement.oldLevel)}));
+    // Level 1->2 และ Level 2->3 ปรับอัตโนมัติเมื่อผ่านครบทั้งข้อเขียนและภาคปฏิบัติ
+    // ตั้งแต่ Level 3->4 ขึ้นไป ต้องรอผู้ประเมินอนุมัติก่อน
+    const autoPromote=passed&&Number(requirement.oldLevel)<3;
+    const approvedLevel=autoPromote?Number(requirement.targetLevel):Number(requirement.oldLevel);
+    const approvalRequired=passed&&Number(requirement.oldLevel)>=3;
+    const finalResult=passed?(autoPromote?'PASS_AUTO_UPDATED':'WAITING_APPROVAL'):(writtenPassed?'WAITING_PRACTICAL':'RE-TRAIN');
+    const data={employeeDocId:employeeStorageKey(emp,onlineExamEmployee?.value||''),employeeId:emp.id||emp.employeeId||'',employeeName:(emp.name||'').toUpperCase(),section:emp.section||onlineExamSection?.value||'',quarter,examSet:(examLevelRules[requirement.oldLevel]?.name||quarter+' Examination'),oldSkillLevel:requirement.oldLevel,targetSkillLevel:requirement.targetLevel,dueDate:requirement.dueDate||'',lockedTopics:topics,score,correct,total:qs.length,practicalResult,result:finalResult,level:approvedLevel,evaluator,date:now.slice(0,10),createdAt:now,skillResults,approvalRequired,autoPromoted:autoPromote};
+
+    const updatedScores={...(emp.skillScores||{})};
+    const updatedLevels={...employeeSkillLevels(emp)};
+    topics.forEach(skill=>{
+      updatedScores[skill]=score;
+      if(autoPromote)updatedLevels[skill]=approvedLevel;
+    });
+    Object.assign(emp,{skillScores:updatedScores,skillLevels:updatedLevels,currentSkillLevel:autoPromote?approvedLevel:Number(requirement.oldLevel),lastExamScore:score,lastExamAt:now,lastExamStatus:autoPromote?'AUTO_UPDATED':approvalRequired?'WAITING_APPROVAL':writtenPassed?'WAITING_PRACTICAL':'RE_TEST'});
+    if(autoPromote){emp.skillUpdatedAt=now;emp.skillApprovedBy='AUTO: Examination Rule (Level 1-3)';}
+
+    // บันทึกในเครื่องก่อนเสมอ เพื่อให้ตรวจคะแนนได้แม้ Firebase หรือสิทธิ์อินเทอร์เน็ตมีปัญหา
+    onlineExamRecords.push(data);
+    skillResults.forEach(x=>skillAssessments.push({employeeId:data.employeeId,employeeName:data.employeeName,section:data.section,topic:x.skill,score:data.score,practicalResult:x.status,result:autoPromote?'PASS / AUTO UPDATED':approvalRequired?'WAITING APPROVAL':writtenPassed?'WRITTEN PASS':'RE-TRAIN',level:autoPromote?approvedLevel:x.level,evaluator:data.evaluator,date:data.date,createdAt:data.createdAt}));
+    localStorage.setItem('onlineExamRecords',JSON.stringify(onlineExamRecords));
+    localStorage.setItem('skillAssessments',JSON.stringify(skillAssessments));
+    localStorage.setItem('productionEmployees',JSON.stringify(employees));
+
+    let cloudSaved=false,cloudError='';
+    if(configured){
+      try{
+        await api.addDoc(api.collection(db,'onlineExamRecords'),data);
+        for(const x of skillResults){await api.addDoc(api.collection(db,'skillAssessments'),{employeeDocId:data.employeeDocId,employeeId:data.employeeId,employeeName:data.employeeName,section:data.section,position:emp.position||'',topic:x.skill,score:data.score,practicalResult:x.status,result:autoPromote?'PASS / AUTO UPDATED':approvalRequired?'WAITING APPROVAL':writtenPassed?'WRITTEN PASS':'RE-TRAIN',level:autoPromote?approvedLevel:x.level,evaluator:data.evaluator,date:data.date,createdAt:data.createdAt,approvalRequired});}
+        const docId=String(emp.docId||emp.id||emp.employeeId||'').replace(/[^A-Za-z0-9_-]/g,'_');
+        if(docId)await api.setDoc(api.doc(db,'employees',docId),{...emp,docId},{merge:true});
+        cloudSaved=true;
+      }catch(err){cloudError=err?.message||String(err);console.warn('Firebase exam save failed, local result retained:',err);}
+    }
+
+    onlineExamResult.classList.remove('hidden');
+    const resultMessage=!writtenPassed?'ไม่ผ่าน — ต้องทดสอบใหม่':practicalResult!=='PASS'?'ผ่านข้อเขียน — รอผลภาคปฏิบัติ':autoPromote?`ผ่าน — ระบบปรับ Skill เป็น Level ${approvedLevel} อัตโนมัติ`:`ผ่าน — รอผู้ประเมินอนุมัติการเลื่อนเป็น Level ${requirement.targetLevel}`;
+    onlineExamResult.innerHTML=`<div class="score-box"><div>ผลสอบ ${esc(data.examSet)}</div><strong>${score}%</strong><div>${correct}/${qs.length} ข้อ</div><p class="${writtenPassed?'pass':'fail'}">${resultMessage}</p><div>ภาคปฏิบัติ: ${practicalResult} · Skill ปัจจุบัน: Level ${approvedLevel} · เป้าหมาย: Level ${requirement.targetLevel}</div><div style="margin-top:8px;font-size:13px">บันทึกคะแนนลง Skill Matrix แล้ว${configured?(cloudSaved?' และซิงก์ Firebase สำเร็จ':' ในเครื่องนี้ (Firebase ยังไม่สำเร็จ)'):''}</div>${cloudError?`<div class="notice" style="margin-top:10px">Firebase: ${esc(cloudError)}</div>`:''}</div>`;
+    document.getElementById('onlineExamStatus').textContent=`สอบเสร็จ ${score}% · ${autoPromote?'AUTO UPDATED':approvalRequired?'WAITING APPROVAL':data.result}`;
+    renderOnlineExamHistory();renderSkillAssessments();renderSectionSkillMatrix();renderSkillCardPreview();
+    onlineExamResult.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(err){console.error('Submit examination error:',err);alert('ตรวจคะแนนไม่สำเร็จ: '+(err?.message||err));}
+  finally{if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='ส่งข้อสอบและตรวจคะแนน';}}
 }
 function renderOnlineExamHistory(){const list=onlineExamRecords.slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));onlineExamHistory.innerHTML=list.length?list.map(x=>`<tr><td>${fmt(x.date)}</td><td>${x.employeeId||'-'}</td><td>${(x.employeeName||'-').toUpperCase()}</td><td>${x.section||'-'}</td><td>${x.quarter||'-'}</td><td>${x.score}%</td><td>${x.practicalResult||'-'}</td><td class="${x.result==='PASS'?'pass':'fail'}">${x.result||'-'}</td><td>Level ${x.level||'-'}</td><td>${x.evaluator||'-'}</td></tr>`).join(''):'<tr><td colspan="10" class="empty">ยังไม่มีประวัติการสอบออนไลน์</td></tr>';}
 renderPracticalTest();
@@ -2458,8 +2533,37 @@ function assignmentStatusLabel(x){if(x.status==='APPROVED')return '<span class="
 function renderExamApprovals(){const body=document.getElementById('examApprovalRows');if(!body)return;const rows=examAssignments.slice().sort((a,b)=>(b.printedAt||'').localeCompare(a.printedAt||''));document.getElementById('pendingExamCount').textContent='รอผลสอบ '+rows.filter(x=>x.status==='WAITING_RESULT').length+' รายการ';body.innerHTML=rows.length?rows.map(x=>{const waiting=x.status==='WAITING_RESULT';return `<tr class="approval-row"><td>${fmt(x.printedDate)}</td><td><b>${esc((x.employeeName||'-').toUpperCase())}</b><br><small>${esc(x.employeeId||'-')}</small></td><td>${esc(x.section||'-')}</td><td>${esc(x.quarter||'-')}</td><td class="skill-current">Level ${esc(x.currentSkillLevel||1)}</td><td>${assignmentStatusLabel(x)}</td><td>${waiting?`<input id="score-${esc(x.docId)}" type="number" min="0" max="100" placeholder="0-100">`:esc(x.score??'-')}</td><td>${waiting?`<select id="practical-${esc(x.docId)}"><option value="">เลือกผล</option><option value="PASS">PASS</option><option value="FAIL">FAIL</option></select>`:esc(x.practicalResult||'-')}</td><td>${waiting?`<select id="level-${esc(x.docId)}"><option value="">เลือกระดับ</option><option value="${Number(x.targetSkillLevel||Math.min(5,Number(x.currentSkillLevel||1)+1))}" selected>Level ${Number(x.targetSkillLevel||Math.min(5,Number(x.currentSkillLevel||1)+1))} (ล็อก)</option></select>`:'Level '+esc(x.approvedSkillLevel||x.currentSkillLevel||1)}</td><td>${waiting?`<input id="approver-${esc(x.docId)}" placeholder="ชื่อ Admin">`:esc(x.approvedBy||'-')}</td><td>${waiting?`<button class="btn admin-only ${isAdmin?'':'hidden'}" type="button" data-approve-exam="${esc(x.docId)}">อนุมัติผล</button>`:'-'}</td></tr>`}).join(''):'<tr><td colspan="11" class="empty">ยังไม่มีรายการสั่งพิมพ์ข้อสอบ</td></tr>';body.querySelectorAll('[data-approve-exam]').forEach(btn=>btn.onclick=()=>approvePrintedExam(btn.dataset.approveExam));}
 async function approvePrintedExam(docId){if(!isAdmin)return alert('กรุณา Login เป็น Admin');const item=examAssignments.find(x=>x.docId===docId);if(!item)return;const score=Number(document.getElementById('score-'+docId).value),practical=document.getElementById('practical-'+docId).value,newLevel=Number(document.getElementById('level-'+docId).value),approver=document.getElementById('approver-'+docId).value.trim();if(!Number.isFinite(score)||score<0||score>100)return alert('กรุณากรอกคะแนน 0-100');if(!practical)return alert('กรุณาเลือกผลภาคปฏิบัติ');if(!newLevel)return alert('กรุณาเลือกระดับ Skill ใหม่');if(!approver)return alert('กรุณากรอกชื่อผู้อนุมัติ');const passed=score>=80&&practical==='PASS';if(passed&&newLevel<Number(item.currentSkillLevel||1))return alert('ระดับใหม่ต้องไม่น้อยกว่าระดับปัจจุบัน');if(!passed&&newLevel>Number(item.currentSkillLevel||1))return alert('ผลสอบไม่ผ่าน ระบบล็อกให้คง Skill Level เดิม');const now=new Date().toISOString(),status=passed?'APPROVED':'RE_TEST',result=passed?'PASS':'RE-TRAIN';const assignmentUpdate={score,practicalResult:practical,approvedSkillLevel:passed?newLevel:Number(item.currentSkillLevel||1),approvedBy:approver,approvedAt:now,status,result};const emp=employees.find(e=>(e.docId||'')===item.employeeDocId)||employees.find(e=>e.id===item.employeeId);if(configured){await api.updateDoc(api.doc(db,'examAssignments',docId),assignmentUpdate);await api.addDoc(api.collection(db,'onlineExamRecords'),{employeeDocId:item.employeeDocId,employeeId:item.employeeId,employeeName:item.employeeName,section:item.section,quarter:item.quarter,score,correct:'-',total:'-',practicalResult:practical,result,level:assignmentUpdate.approvedSkillLevel,evaluator:approver,date:now.slice(0,10),createdAt:now,approvalSource:'PRINTED_EXAM'});await api.addDoc(api.collection(db,'skillAssessments'),{employeeDocId:item.employeeDocId,employeeId:item.employeeId,employeeName:item.employeeName,section:item.section,position:emp?.position||'',topic:`${item.quarter} Printed Exam`,score,level:assignmentUpdate.approvedSkillLevel,evaluator:approver,date:now.slice(0,10),createdAt:now,result});if(passed&&item.employeeDocId){const base={...(item.baselineSkillLevels||employeeSkillLevels(emp))};(item.lockedTopics||Object.keys(base)).forEach(k=>base[k]=newLevel);await api.updateDoc(api.doc(db,'employees',item.employeeDocId),{skillLevels:base,currentSkillLevel:newLevel,skillUpdatedAt:now,skillApprovedBy:approver,previousSkillSnapshot:{capturedAt:item.printedAt||now,levels:item.baselineSkillLevels||{},overall:item.currentSkillLevel||1}});}}else{Object.assign(item,assignmentUpdate);localStorage.setItem('examAssignments',JSON.stringify(examAssignments));onlineExamRecords.push({employeeId:item.employeeId,employeeName:item.employeeName,section:item.section,quarter:item.quarter,score,practicalResult:practical,result,level:assignmentUpdate.approvedSkillLevel,evaluator:approver,date:now.slice(0,10),createdAt:now});skillAssessments.push({employeeId:item.employeeId,employeeName:item.employeeName,section:item.section,topic:`${item.quarter} Printed Exam`,score,level:assignmentUpdate.approvedSkillLevel,evaluator:approver,date:now.slice(0,10),createdAt:now,result});if(passed&&emp){const base={...(item.baselineSkillLevels||employeeSkillLevels(emp))};(item.lockedTopics||Object.keys(base)).forEach(k=>base[k]=newLevel);Object.assign(emp,{skillLevels:base,currentSkillLevel:newLevel,skillUpdatedAt:now,skillApprovedBy:approver,previousSkillSnapshot:{capturedAt:item.printedAt||now,levels:item.baselineSkillLevels||{},overall:item.currentSkillLevel||1}});}localStorage.setItem('onlineExamRecords',JSON.stringify(onlineExamRecords));localStorage.setItem('skillAssessments',JSON.stringify(skillAssessments));localStorage.setItem('productionEmployees',JSON.stringify(employees));renderAll();}alert(passed?`อนุมัติผลสอบแล้ว และปรับ Skill เป็น Level ${newLevel}`:'บันทึกผลไม่ผ่านแล้ว สถานะเป็นต้องสอบใหม่');}
 function renderExamEmployees(){examEmployee.innerHTML='<option value="">เลือกพนักงาน</option>'+employees.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'')).map(e=>`<option value="${e.docId||employees.indexOf(e)}">${e.id||'-'} — ${(e.name||'').toUpperCase()} — ${e.section||'-'}</option>`).join('');}
-function renderSkillAssessments(){examResults.innerHTML=skillAssessments.length?skillAssessments.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(x=>`<tr><td>${fmt(x.date)}</td><td>${x.employeeId||'-'}</td><td>${(x.employeeName||'-').toUpperCase()}</td><td>${x.section||'-'}</td><td>${x.topic||'-'}</td><td>${x.score}</td><td>${x.score>=70?'PASS':'RE-TRAIN'}</td><td>Level ${x.level}</td><td>${x.evaluator||'-'}</td></tr>`).join(''):'<tr><td colspan="9" class="empty">ยังไม่มีผลการประเมิน</td></tr>';}
-document.getElementById('skillExamForm').onsubmit=async ev=>{ev.preventDefault();if(!isAdmin){alert('กรุณา Login ด้วยบัญชี Admin');return}const key=examEmployee.value;const emp=configured?employees.find(x=>x.docId===key):employees[Number(key)];if(!emp)return alert('กรุณาเลือกพนักงาน');const score=Number(examScore.value);const level=examLevel.value==='auto'?skillLevelFromScore(score):Number(examLevel.value);const data={employeeDocId:key,employeeId:emp.id||'',employeeName:(emp.name||'').toUpperCase(),section:emp.section||'',position:emp.position||'',topic:examTopic.value.trim(),score,level,evaluator:examEvaluator.value.trim(),date:examDate.value,createdAt:new Date().toISOString()};if(configured)await api.addDoc(api.collection(db,'skillAssessments'),data);else{skillAssessments.push(data);localStorage.setItem('skillAssessments',JSON.stringify(skillAssessments));renderSkillAssessments();}ev.target.reset();examDate.value=new Date().toISOString().slice(0,10);alert(`บันทึกแล้ว: ${score>=70?'PASS':'RE-TRAIN'} / Level ${level}`);};
+function renderSkillAssessments(){
+  const pending=onlineExamRecords.filter(x=>x.approvalRequired===true||x.result==='WAITING_APPROVAL').sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||''));
+  const count=document.getElementById('pendingLevel3Count');if(count)count.textContent=`รออนุมัติ ${pending.length} รายการ`;
+  examResults.innerHTML=pending.length?pending.map(x=>{const topics=(x.lockedTopics||x.skillResults?.map(a=>a.skill)||[]).join(', ')||x.quarter||'-';return `<tr><td>${fmt(x.date)}</td><td><b>${esc(x.employeeId||'-')} — ${esc((x.employeeName||'-').toUpperCase())}</b></td><td>${esc(x.section||'-')}</td><td>${esc(topics)}</td><td><b>${esc(x.score??'-')}%</b></td><td>Level ${esc(x.oldSkillLevel||x.level||3)}</td><td>Level ${esc(x.targetSkillLevel||Math.min(5,Number(x.oldSkillLevel||x.level||3)+1))}</td><td>${esc(x.evaluator||'-')}</td><td><input id="pending-approver-${esc(x.docId||x.createdAt)}" placeholder="ชื่อผู้อนุมัติ"></td><td><div style="display:flex;gap:6px"><button class="btn admin-only ${isAdmin?'':'hidden'}" type="button" data-pending-approve="${esc(x.docId||x.createdAt)}">อนุมัติ</button><button class="btn secondary admin-only ${isAdmin?'':'hidden'}" type="button" data-pending-reject="${esc(x.docId||x.createdAt)}">ไม่อนุมัติ</button></div></td></tr>`}).join(''):'<tr><td colspan="10" class="empty">ยังไม่มีรายการ Level 3 ขึ้นไปที่รออนุมัติ</td></tr>';
+  examResults.querySelectorAll('[data-pending-approve]').forEach(b=>b.onclick=()=>approvePendingLevel3(b.dataset.pendingApprove,true));
+  examResults.querySelectorAll('[data-pending-reject]').forEach(b=>b.onclick=()=>approvePendingLevel3(b.dataset.pendingReject,false));
+}
+async function approvePendingLevel3(recordKey,approved){
+  if(!isAdmin)return alert('กรุณา Login เป็น Admin');
+  const item=onlineExamRecords.find(x=>(x.docId||x.createdAt)===recordKey);if(!item)return alert('ไม่พบรายการรออนุมัติ');
+  const approver=(document.getElementById('pending-approver-'+recordKey)?.value||'').trim();if(!approver)return alert('กรุณากรอกชื่อผู้อนุมัติ');
+  const emp=employees.find(e=>(e.docId||'')===item.employeeDocId)||employees.find(e=>String(e.id||e.employeeId||'')===String(item.employeeId||''));if(!emp)return alert('ไม่พบข้อมูลพนักงาน');
+  const now=new Date().toISOString(),target=Number(item.targetSkillLevel||Math.min(5,Number(item.oldSkillLevel||item.level||3)+1));
+  const topics=(item.lockedTopics||item.skillResults?.map(a=>a.skill)||[]).filter(Boolean);
+  const scores={...(emp.skillScores||{})};topics.forEach(t=>scores[t]=Number(item.score||0));
+  const levels={...employeeSkillLevels(emp)};if(approved)topics.forEach(t=>levels[t]=target);
+  Object.assign(emp,{skillScores:scores,skillLevels:levels,currentSkillLevel:approved?target:Number(item.oldSkillLevel||item.level||3),lastExamScore:Number(item.score||0),lastExamAt:item.createdAt||now,lastExamStatus:approved?'APPROVED':'REJECTED',skillUpdatedAt:approved?now:emp.skillUpdatedAt,skillApprovedBy:approved?approver:emp.skillApprovedBy});
+  const update={approvalRequired:false,result:approved?'APPROVED':'REJECTED',level:approved?target:Number(item.oldSkillLevel||item.level||3),approvedBy:approver,approvedAt:now};
+  Object.assign(item,update);
+  try{
+    if(configured){
+      if(item.docId)await api.updateDoc(api.doc(db,'onlineExamRecords',item.docId),update);
+      if(emp.docId)await api.updateDoc(api.doc(db,'employees',emp.docId),{skillScores:scores,skillLevels:levels,currentSkillLevel:emp.currentSkillLevel,lastExamScore:emp.lastExamScore,lastExamAt:emp.lastExamAt,lastExamStatus:emp.lastExamStatus,skillUpdatedAt:emp.skillUpdatedAt||'',skillApprovedBy:emp.skillApprovedBy||''});
+      for(const topic of topics){await api.addDoc(api.collection(db,'skillAssessments'),{employeeDocId:emp.docId||'',employeeId:emp.id||emp.employeeId||'',employeeName:(emp.name||'').toUpperCase(),section:emp.section||'',position:emp.position||'',topic,score:Number(item.score||0),level:approved?target:Number(item.oldSkillLevel||item.level||3),evaluator:approver,date:now.slice(0,10),createdAt:now,result:approved?'APPROVED':'REJECTED'});}
+    }else{
+      localStorage.setItem('onlineExamRecords',JSON.stringify(onlineExamRecords));localStorage.setItem('productionEmployees',JSON.stringify(employees));
+    }
+    renderAll();alert(approved?`อนุมัติแล้ว ระบบปรับ Skill เป็น Level ${target}`:'บันทึกไม่อนุมัติแล้ว ระดับเดิมยังคงอยู่');
+  }catch(err){console.error(err);alert('บันทึกไม่สำเร็จ: '+(err?.message||err));}
+}
+const oldSkillExamForm=document.getElementById('skillExamForm');if(oldSkillExamForm)oldSkillExamForm.onsubmit=e=>e.preventDefault();alert(`บันทึกแล้ว: ${score>=70?'PASS':'RE-TRAIN'} / Level ${level}`);};
 examDate.value=new Date().toISOString().slice(0,10);
 
 
@@ -2699,7 +2803,7 @@ document.getElementById('closeObservation').onclick=()=>document.getElementById(
 document.getElementById('saveObservation').onclick=()=>{if(!isAdmin)return alert('กรุณา Login เป็น Admin');const x=evaluationPlans.find(a=>a.id===activeEvaluationId);if(!x)return;const r=calcObservationScore(),checks={};document.querySelectorAll('.obs-grade').forEach(el=>checks[el.dataset.i]={grade:el.value,note:document.querySelector(`.obs-note[data-i="${el.dataset.i}"]`).value});Object.assign(x,{checks,score:r.score,result:r.pass?'PASS':'FAIL',status:'COMPLETED',evaluator:document.getElementById('observationEvaluator').value,note:document.getElementById('observationNote').value,completedAt:new Date().toISOString()});saveEvaluationPlans();renderEvaluationPlan();alert('บันทึกผล Job Observation แล้ว');};
 document.getElementById('evalPrintBtn').onclick=()=>printGeneric('EVALUATION PLAN / JOB OBSERVATION PLAN',document.getElementById('evaluationPlan').innerHTML);
 
-searchInput.oninput=renderSearch;function renderAll(){renderOrg();renderSection(filter.value);renderSectionChart(chartFilter.value);renderSearch();renderTrainingPlan();renderExamEmployees();renderOnlineExamEmployees();renderOnlineExamHistory();renderPracticalTest();refreshExamLock();renderSkillAssessments();renderExamApprovals();updateAuthUI(auth&&auth.currentUser);document.getElementById('examViewerNote').classList.toggle('hidden',isAdmin);refreshCommonDropdowns()}
+searchInput.oninput=renderSearch;function renderAll(){renderOrg();renderSection(filter.value);renderSectionChart(chartFilter.value);renderSearch();renderTrainingPlan();renderExamEmployees();renderOnlineExamEmployees();renderOnlineExamHistory();renderPracticalTest();refreshExamLock();renderSkillAssessments();renderExamApprovals();updateAuthUI(auth&&auth.currentUser);document.getElementById('examViewerNote').classList.toggle('hidden',isAdmin);refreshCommonDropdowns();try{renderSectionSkillMatrix()}catch(e){console.warn('Skill Matrix render:',e)}try{refreshSkillCardEmployees();renderSkillCardPreview()}catch(e){console.warn('Skill Card render:',e)}}
 renderAll();
 setInterval(renderAll,3600000);
 
@@ -2932,6 +3036,8 @@ select:disabled{opacity:.65!important;cursor:not-allowed!important}
         sel.value=opt.value;
       }
       if(typeof refreshExamLock==='function')refreshExamLock();
+      const startBtn=$('startOnlineExam');
+      if(startBtn&&typeof window.startOnlineExamination==='function')startBtn.onclick=window.startOnlineExamination;
       const badge=$('userBadge'); if(badge)badge.textContent=`ผู้เข้าสอบ: ${emp.id||'-'} — ${(emp.name||'').toUpperCase()}`;
       const first=page.querySelector('.panel');
       let identity=$('employeeIdentity'); if(first&&!identity){identity=document.createElement('div');identity.id='employeeIdentity';identity.className='notice';first.insertBefore(identity,first.children[1]||null);}
@@ -2986,7 +3092,8 @@ select:disabled{opacity:.65!important;cursor:not-allowed!important}
     const list=employees().map((e,i)=>({e,i})).filter(x=>!sec||norm(x.e.section)===sec).sort((a,b)=>String(a.e.name||'').localeCompare(String(b.e.name||'')));
     el.disabled=false;el.style.pointerEvents='auto';el.style.opacity='1';el.style.position='relative';el.style.zIndex='20';
     el.innerHTML='<option value="">เลือกพนักงาน ('+list.length+' คน)</option>'+list.map(x=>'<option value="'+employeeKey(x.e,x.i)+'">'+esc(x.e.id||'-')+' — '+esc(String(x.e.name||'').toUpperCase())+'</option>').join('');
-    if([...el.options].some(o=>o.value===old))el.value=old;
+    if([...el.options].some(o=>o.value===old))el.value=old;else if(list.length)el.value=employeeKey(list[0].e,list[0].i);
+    el.dispatchEvent(new Event('change',{bubbles:true}));
   }
   function dispatch(el){if(el)el.dispatchEvent(new Event('change',{bubbles:true}))}
   function repair(){
@@ -3000,7 +3107,97 @@ select:disabled{opacity:.65!important;cursor:not-allowed!important}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(repair,700));else setTimeout(repair,700);
   setTimeout(repair,1800);setTimeout(repair,3500);
   window.repairSkillDropdowns=repair;
+  document.addEventListener('change',e=>{
+    if(e.target&&e.target.id==='skillCardEmployee'){try{const fn=window.renderSkillCardPreview;if(typeof fn==='function')fn()}catch(err){console.warn(err)}}
+    if(e.target&&['skillMatrixSection','skillMatrixQuarter','skillMatrixStatus'].includes(e.target.id)){try{const fn=window.renderSectionSkillMatrix;if(typeof fn==='function')fn()}catch(err){console.warn(err)}}
+  });
+})();
+</script>
+
+<!-- v56: robust submit and score for employee/admin modes -->
+
+<style id="i18nStyle">
+.lang-switch{display:flex;gap:4px;background:rgba(255,255,255,.14);padding:4px;border-radius:9px}.lang-switch button{border:0;border-radius:7px;padding:7px 11px;font-weight:800;cursor:pointer;background:transparent;color:#fff}.lang-switch button.active{background:#fff;color:#124b82}.lang-switch button:focus{outline:2px solid #facc15;outline-offset:1px}
+@media(max-width:760px){.lang-switch{align-self:flex-end}}
+</style>
+<script id="globalI18nScript">
+(function(){
+'use strict';
+const TH='th', EN='en';
+let lang=localStorage.getItem('productionLanguage')||TH;
+const pairs={
+'พนักงานทั้งหมด':'Total Employees','เข้าใหม่เดือนนี้':'New This Month','ผู้ใช้งาน':'User Role','ผู้จัดการฝ่ายผลิต':'Production Manager',
+'พิมพ์ Organization / บันทึก PDF':'Print Organization / Save PDF','เลือก Section และเรียงลำดับพนักงานได้':'Select a section and sort employees',
+'ทุกตำแหน่ง':'All Positions','ตำแหน่ง':'Position','เรียงตาม':'Sort By','ลำดับตำแหน่ง':'Position Order','ชื่อพนักงาน':'Employee Name','รหัสพนักงาน':'Employee ID','วันที่เริ่มงาน':'Start Date','อายุงาน':'Service Period','ลำดับ':'Order','ค้นหาใน Section':'Search in Section',
+'น้อย → มาก / A → Z':'Ascending / A → Z','มาก → น้อย / Z → A':'Descending / Z → A','ค้นหาชื่อ รหัส เบอร์โทร หรือตำแหน่ง':'Search name, ID, phone or position',
+'ชื่อ-นามสกุล':'Full Name','เบอร์โทรติดต่อ':'Contact Number','รูปพนักงาน':'Employee Photo','บันทึกพนักงาน':'Save Employee','ตัวอย่างรูปพนักงาน':'Employee Photo Preview',
+'รองรับ JPG, PNG, WEBP · ระบบจะย่อรูปอัตโนมัติ · ขนาดไม่เกิน 5 MB':'Supports JPG, PNG and WEBP · Images are resized automatically · Maximum 5 MB',
+'รูป':'Photo','รหัส':'ID','ชื่อ':'Name','เบอร์โทร':'Phone','จัดการ':'Actions','ค้นหาชื่อ รหัส Section หรือตำแหน่ง':'Search name, ID, section or position',
+'วิธีแก้ไขและเซฟข้อมูล':'How to Edit and Save','อัปโหลด/ซิงก์ข้อมูลพนักงาน 116 คน':'Upload/Sync 116 Employees',
+'นำเข้าจากแผน Audit เดือนกรกฎาคม 2026 และเพิ่มแผนใหม่ได้':'Imported from the July 2026 audit plan; new plans can be added',
+'พิมพ์แผน / PDF':'Print Plan / PDF','ทั้งหมด':'All','สถานะ':'Status','รอประเมิน':'Pending Evaluation','ประเมินแล้ว':'Completed','ไม่ผ่าน':'Failed','เกินกำหนด':'Overdue','เดือน':'Month','ค้นหา':'Search','เพิ่มแผนประเมิน':'Add Evaluation Plan','พนักงาน':'Employee','ประเภทการประเมิน':'Evaluation Type','วันที่ประเมิน':'Evaluation Date','ผู้ประเมิน':'Evaluator','เลือกผู้ประเมิน':'Select Evaluator','เพิ่มลงแผน':'Add to Plan','ประเภท':'Type','คะแนน':'Score','ผล':'Result','ดำเนินการ':'Action','ปิด':'Close','หมายเหตุ':'Remarks','คะแนนรวม':'Total Score','บันทึกผล Job Observation':'Save Job Observation Result',
+'ไตรมาส':'Quarter','ม.ค.–มี.ค.':'Jan–Mar','เม.ย.–มิ.ย.':'Apr–Jun','ก.ค.–ก.ย.':'Jul–Sep','ต.ค.–ธ.ค.':'Oct–Dec',
+'ระบบ Fix ชุดข้อสอบตาม Skill Level ปัจจุบัน: Level 1–2 ปรับถึง Level 3 อัตโนมัติ ส่วน Level 3 ขึ้นไปต้องรออนุมัติ':'The exam set is fixed by the current skill level: Levels 1–2 advance automatically up to Level 3; Level 3 and above require approval',
+'ยังไม่ได้เริ่มสอบ':'Exam Not Started','ระบบกำหนดชุดข้อสอบตามระดับ Skill ของพนักงาน':'The system assigns the exam set based on the employee skill level','เลือกพนักงานเพื่อดูชุดข้อสอบที่เหมาะกับระดับ Skill':'Select an employee to view the assigned exam set','Skill เดิม':'Current Skill','ชุดข้อสอบที่กำหนด':'Assigned Exam Set','เป้าหมายใหม่':'Target Level','ครบกำหนดประเมิน':'Evaluation Due Date','เริ่มทำข้อสอบ':'Start Examination','พิมพ์ข้อสอบ + Skill Matrix / บันทึก PDF':'Print Exam + Skill Matrix / Save PDF',
+'ส่งข้อสอบและตรวจคะแนน':'Submit Exam and Check Score','ข้อที่ยังไม่ได้ตอบ':'Unanswered Questions','ตอบคำถามให้ครบทุกข้อ':'Please answer all questions','สอบผ่าน':'Passed','สอบไม่ผ่าน':'Not Passed','รออนุมัติ':'Pending Approval','อนุมัติ':'Approve','ไม่อนุมัติ':'Reject','อนุมัติแล้ว':'Approved','ปฏิเสธแล้ว':'Rejected',
+'บันทึกผลสอบ':'Save Exam Result','คำนวณจากคะแนนอัตโนมัติ':'Calculate Automatically','หัวข้อทักษะ':'Skill Topic','เลือกหัวข้อทักษะ':'Select Skill Topic','ระดับใหม่':'New Level','ประวัติการประเมิน':'Assessment Records','วันที่':'Date','หัวข้อ':'Topic','ระดับทักษะ':'Skill Level',
+'รอบประเมิน':'Evaluation Quarter','รอบปัจจุบันอัตโนมัติ':'Current Quarter (Auto)','ค้นหาพนักงาน':'Search Employee','ชื่อหรือรหัส':'Name or ID','พิมพ์ Skill Matrix / PDF':'Print Skill Matrix / PDF','พิมพ์ทุก Section / PDF':'Print All Sections / PDF',
+'เครื่องจักร/พื้นที่ประจำ':'Assigned Machine / Area','เลือกเครื่องจักร/พื้นที่':'Select Machine / Area','ผู้อนุมัติ':'Approved By','เลือกผู้อนุมัติ':'Select Approver','พิมพ์บัตรที่เลือก / PDF':'Print Selected Card / PDF','พิมพ์บัตรทั้ง Section / PDF':'Print All Section Cards / PDF',
+'ไม่มีข้อมูล':'No Data','ยังไม่มีพนักงาน':'No Employees Yet','ไม่พบข้อมูล':'No Data Found','กำลังโหลดข้อมูล':'Loading Data','บันทึก':'Save','ยกเลิก':'Cancel','แก้ไข':'Edit','ลบ':'Delete','พิมพ์':'Print','ดาวน์โหลด':'Download','เข้าสู่ระบบ':'Login','ออกจากระบบ':'Logout','พนักงานเข้าสอบ':'Employee Examination','เข้าหน้าทดสอบ':'Enter Examination','กรอกรหัสพนักงานเพื่อเปิดเฉพาะหน้าทำข้อสอบของตนเอง':'Enter your employee ID to open only your examination page',
+'เลือก':'Select','ระดับ':'Level','ผ่าน':'Pass','ไม่ผ่าน':'Fail','รอ':'Pending','แผนก':'Section','ฝ่ายผลิต':'Production Division','หน่วยงานคัดแยก':'Sorting Unit','โรง 1':'Plant 1','โรง 2':'Plant 2'
+};
+const reverse=Object.fromEntries(Object.entries(pairs).map(([k,v])=>[v,k]));
+const thRx=/[\u0E00-\u0E7F]/, enRx=/[A-Za-z]/;
+function bilingual(original,target){
+ const s=original.trim();
+ if(!s) return original;
+ const parts=s.split(/\s*\/\s*/);
+ if(parts.length===2 && ((thRx.test(parts[0])&&enRx.test(parts[1]))||(enRx.test(parts[0])&&thRx.test(parts[1])))){
+   const chosen=target===TH?(thRx.test(parts[0])?parts[0]:parts[1]):(enRx.test(parts[0])?parts[0]:parts[1]);
+   return original.replace(s,chosen.trim());
+ }
+ return null;
+}
+function translateString(original,target){
+ if(!original) return original;
+ const bi=bilingual(original,target); if(bi!==null) return bi;
+ const lead=original.match(/^\s*/)[0], trail=original.match(/\s*$/)[0], core=original.trim();
+ if(target===EN && pairs[core]) return lead+pairs[core]+trail;
+ if(target===TH && reverse[core]) return lead+reverse[core]+trail;
+ let out=core;
+ const dict=target===EN?pairs:reverse;
+ Object.keys(dict).sort((a,b)=>b.length-a.length).forEach(k=>{if(out.includes(k))out=out.split(k).join(dict[k])});
+ return lead+out+trail;
+}
+function remember(el,attr,key){if(!el.dataset[key]) el.dataset[key]=el.getAttribute(attr)||''}
+function applyElement(el){
+ if(!el||el.nodeType!==1||el.closest('#languageSwitcher'))return;
+ ['placeholder','title','aria-label','alt'].forEach(attr=>{if(el.hasAttribute(attr)){const key='i18n'+attr.replace('-','');remember(el,attr,key);el.setAttribute(attr,translateString(el.dataset[key],lang))}});
+ if(el.tagName==='INPUT'&&['button','submit','reset'].includes((el.type||'').toLowerCase())){remember(el,'value','i18nvalue');el.value=translateString(el.dataset.i18nvalue,lang)}
+}
+function applyNode(root){
+ const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT); let n;
+ while(n=walker.nextNode()){
+   const p=n.parentElement;if(!p||['SCRIPT','STYLE','TEXTAREA'].includes(p.tagName)||p.closest('#languageSwitcher'))continue;
+   if(n.nodeValue.trim()){if(n._i18nOriginal===undefined)n._i18nOriginal=n.nodeValue;n.nodeValue=translateString(n._i18nOriginal,lang)}
+ }
+ if(root.nodeType===1)applyElement(root);
+ (root.querySelectorAll?root.querySelectorAll('*'):[]).forEach(applyElement);
+}
+function updateButtons(){document.documentElement.lang=lang==='th'?'th':'en';document.querySelectorAll('#languageSwitcher button').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang))}
+function setLanguage(next){lang=next;localStorage.setItem('productionLanguage',lang);observer.disconnect();applyNode(document.body);updateButtons();observer.observe(document.body,{childList:true,subtree:true});document.dispatchEvent(new CustomEvent('languagechange',{detail:{language:lang}}))}
+function install(){
+ const host=document.querySelector('.top-actions')||document.querySelector('header');
+ const box=document.createElement('div');box.id='languageSwitcher';box.className='lang-switch';box.setAttribute('aria-label','Language');box.innerHTML='<button type="button" data-lang="th">ไทย</button><button type="button" data-lang="en">EN</button>';
+ box.addEventListener('click',e=>{const b=e.target.closest('button[data-lang]');if(b)setLanguage(b.dataset.lang)});host.insertBefore(box,host.firstChild);
+ applyNode(document.body);updateButtons();observer.observe(document.body,{childList:true,subtree:true});
+}
+const observer=new MutationObserver(ms=>{observer.disconnect();ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1||n.nodeType===3)applyNode(n.nodeType===3?n.parentElement:n)}));observer.observe(document.body,{childList:true,subtree:true})});
+window.setAppLanguage=setLanguage;window.getAppLanguage=()=>lang;
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();
 </script>
 
 </body></html>
+
+<!-- v58: auto update through Level 3; Level 3+ requires approval -->
