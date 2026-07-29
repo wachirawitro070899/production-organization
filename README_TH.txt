@@ -45,3 +45,11 @@ Version 39
 - รองรับ Evaluation Plan, Online Examination, Employee Skill Card และ Skill Matrix Examination
 - เพิ่มช่อง Section ในหน้า Skill Matrix Examination
 - Dropdown รายชื่อยังสามารถพิมพ์ค้นหาชื่อหรือรหัสพนักงานได้
+
+Version 41
+- ยกเลิก Dropdown แบบค้นหาที่ซ้อนทับช่องเดิมและทำให้กดไม่ได้
+- ใช้ Dropdown มาตรฐานของเบราว์เซอร์ทุกหน้า
+- เลือก Section แล้วกรองรายชื่อพนักงานตาม Section
+- เปิดใช้งาน Dropdown ทั้งหมด ไม่บังคับ Disabled
+- ยกเลิกการล็อกข้อสอบตามวันครบกำหนดและ Skill Matrix เดิม
+- สามารถเลือก Q1-Q4 และเริ่มสอบ/พิมพ์ข้อสอบได้ทันที
