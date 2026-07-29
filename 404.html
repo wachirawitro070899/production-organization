@@ -2958,4 +2958,49 @@ select:disabled{opacity:.65!important;cursor:not-allowed!important}
 </script>
 
 <!-- v52: fixed employee portal access to module-scoped employee data -->
+
+<!-- v55: repair Section Skill Matrix and Employee Skill Card dropdowns -->
+<script id="v55SkillDropdownRepair">
+(function(){
+  const defaults=['Engineering Support Section','Stamping Section','Welding Section','CNC Section','Tapping Section','Bending Section','Sorting Section','Machine Maintenance Section','Tooling Maintenance Section'];
+  const norm=v=>String(v||'').trim().replace(/\s+/g,' ');
+  const esc=v=>String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  function employees(){try{return typeof window.getProductionEmployees==='function'?(window.getProductionEmployees()||[]):[]}catch(e){return []}}
+  function sections(){
+    const set=new Set(defaults);
+    employees().forEach(e=>{const sec=norm(e&&e.section);if(sec)set.add(sec)});
+    document.querySelectorAll('select[id$="Section"] option').forEach(o=>{const v=norm(o.value||o.textContent);if(v&&!/^เลือก|^select/i.test(v))set.add(v)});
+    return [...set];
+  }
+  function fillSection(id){
+    const el=document.getElementById(id);if(!el)return;
+    const old=el.value;const list=sections();
+    el.disabled=false;el.style.pointerEvents='auto';el.style.opacity='1';el.style.position='relative';el.style.zIndex='20';
+    el.innerHTML='<option value="">เลือก Section</option>'+list.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('');
+    if(list.includes(old))el.value=old;else if(list.includes('Stamping Section'))el.value='Stamping Section';
+  }
+  function employeeKey(e,i){return encodeURIComponent(String(e.docId||e.id||i))}
+  function fillCardEmployees(){
+    const secEl=document.getElementById('skillCardSection'),el=document.getElementById('skillCardEmployee');if(!el)return;
+    const old=el.value,sec=norm(secEl&&secEl.value);
+    const list=employees().map((e,i)=>({e,i})).filter(x=>!sec||norm(x.e.section)===sec).sort((a,b)=>String(a.e.name||'').localeCompare(String(b.e.name||'')));
+    el.disabled=false;el.style.pointerEvents='auto';el.style.opacity='1';el.style.position='relative';el.style.zIndex='20';
+    el.innerHTML='<option value="">เลือกพนักงาน ('+list.length+' คน)</option>'+list.map(x=>'<option value="'+employeeKey(x.e,x.i)+'">'+esc(x.e.id||'-')+' — '+esc(String(x.e.name||'').toUpperCase())+'</option>').join('');
+    if([...el.options].some(o=>o.value===old))el.value=old;
+  }
+  function dispatch(el){if(el)el.dispatchEvent(new Event('change',{bubbles:true}))}
+  function repair(){
+    fillSection('skillMatrixSection');fillSection('skillCardSection');fillCardEmployees();
+    const sm=document.getElementById('skillMatrixSection'),sc=document.getElementById('skillCardSection');
+    if(sm&&!sm.dataset.v55ready){sm.dataset.v55ready='1';sm.addEventListener('change',()=>setTimeout(()=>{try{if(typeof window.renderSectionSkillMatrix==='function')window.renderSectionSkillMatrix()}catch(e){}},0))}
+    if(sc&&!sc.dataset.v55ready){sc.dataset.v55ready='1';sc.addEventListener('change',()=>{setTimeout(fillCardEmployees,0)})}
+    document.querySelectorAll('#sectionSkillMatrix select,#skillCards select').forEach(el=>{el.disabled=false;el.style.pointerEvents='auto';el.style.cursor='pointer'});
+    dispatch(sm);dispatch(sc);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(repair,700));else setTimeout(repair,700);
+  setTimeout(repair,1800);setTimeout(repair,3500);
+  window.repairSkillDropdowns=repair;
+})();
+</script>
+
 </body></html>

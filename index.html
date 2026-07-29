@@ -2386,7 +2386,9 @@ function employeeBaselineLevel(emp){const vals=Object.values(employeeSkillLevels
 function employeeExamRequirement(emp){if(!emp)return null;const oldLevel=employeeBaselineLevel(emp),rule=examLevelRules[oldLevel]||examLevelRules[1],dates=skillDates(emp),skills=employeeSkillLevels(emp),topics=Object.entries(skills).filter(([,v])=>Number(v)===oldLevel).map(([k])=>k),hasPreviousReview=!!emp.skillUpdatedAt;return {oldLevel,targetLevel:rule.target,quarter:rule.quarter,setName:rule.name,dueDate:hasPreviousReview?dates.next:isoDate(new Date()),days:hasPreviousReview?dates.days:0,isDue:!hasPreviousReview||dates.days<=0,topics:topics.length?topics:Object.keys(skills),hasPreviousReview};}
 function renderOnlineExamEmployees(){const section=onlineExamSection.value;const previous=onlineExamEmployee.value;const list=employees.filter(e=>!section||normalizedSection(e.section)===normalizedSection(section)).sort((a,b)=>(a.name||'').localeCompare(b.name||''));onlineExamEmployee.innerHTML='<option value="">เลือกพนักงาน ('+list.length+' คน)</option>'+list.map(e=>`<option value="${e.docId||employees.indexOf(e)}">${e.id||'-'} — ${(e.name||'').toUpperCase()}</option>`).join('');if([...onlineExamEmployee.options].some(o=>o.value===previous))onlineExamEmployee.value=previous;else onlineExamEmployee.value='';onlineExamEmployee.disabled=false;}
 function currentOnlineEmployee(){
-  if(document.body.classList.contains('employee-exam-mode')&&window.currentPortalEmployee)return window.currentPortalEmployee;
+  // Employee portal must always use the employee who entered the portal.
+  // Do not depend on the dropdown value because the option value may be a Firestore docId.
+  if(window.currentPortalEmployee)return window.currentPortalEmployee;
   return resolveEmployee(onlineExamEmployee.value);
 }
 function refreshExamLock(){
@@ -2404,7 +2406,36 @@ function refreshExamLock(){
 }
 onlineExamEmployee.onchange=refreshExamLock;onlineExamSection.onchange=()=>{renderOnlineExamEmployees();refreshExamLock();renderPracticalTest();};onlineExamQuarter.onchange=()=>{refreshExamLock();renderPracticalTest();};
 function renderPracticalTest(){const emp=currentOnlineEmployee(),sec=emp?.section||onlineExamSection.value,r=employeeExamRequirement(emp);const list=emp?(r?.topics||[]):(examSkillTopics[sec]||[]);practicalTestArea.innerHTML=`<div class="notice" style="grid-column:1/-1"><b>Practical Test / Job Observation</b><br>${emp?'ประเมินเฉพาะหัวข้อระดับปัจจุบัน คะแนนจะบันทึกอัตโนมัติ ส่วนระดับต้องรอผู้ประเมินอนุมัติ':'เลือกพนักงานเพื่อแสดงหัวข้อที่ต้องประเมิน'}</div>`+list.map((x,i)=>`<div class="practical-item"><b>${i+1}. ${x}</b><select class="practical-status" data-skill-name="${encodeURIComponent(x)}"><option value="">ยังไม่ประเมิน</option><option value="PASS">ผ่าน</option><option value="FAIL">ไม่ผ่าน</option></select></div>`).join('');}
-document.getElementById('startOnlineExam').onclick=()=>{const emp=currentOnlineEmployee();if(!emp)return alert('กรุณาเลือกพนักงาน');const r=employeeExamRequirement(emp),employeeMode=document.body.classList.contains('employee-exam-mode'),q=employeeMode?r.quarter:(onlineExamQuarter.value||r.quarter),qs=examQuestionBank[q]||[];if(employeeMode)onlineExamQuarter.value=q;onlineExamArea.classList.remove('hidden');onlineExamResult.classList.add('hidden');document.getElementById('onlineExamStatus').textContent=`กำลังทำ ${q} · ${qs.length} ข้อ`;onlineExamArea.innerHTML=`<form id="onlineExamForm"><h3>${q} — Online Examination</h3><div class="notice"><b>${emp.id||'-'} — ${(emp.name||'').toUpperCase()}</b><br>ชุดข้อสอบถูก Fix ตาม Skill Level ปัจจุบัน: Level ${r.oldLevel} → Level ${r.targetLevel}</div>${qs.map((x,i)=>`<div class="question-card"><h4>${i+1}. ${x.q}</h4>${x.c.map((c,j)=>`<label class="answer-option"><input type="radio" name="q${i}" value="${j}" required>${c}</label>`).join('')}</div>`).join('')}<button class="btn" type="submit">ส่งข้อสอบและตรวจคะแนน</button></form>`;document.getElementById('onlineExamForm').onsubmit=submitOnlineExam;onlineExamArea.scrollIntoView({behavior:'smooth'});};
+function startOnlineExamination(){
+  try{
+    const emp=window.currentPortalEmployee||currentOnlineEmployee();
+    if(!emp){alert('ไม่พบข้อมูลพนักงาน กรุณาออกแล้วเข้าสู่หน้าทดสอบใหม่');return;}
+    let r=null;
+    try{r=employeeExamRequirement(emp);}catch(err){console.warn('Skill requirement fallback:',err);}
+    if(!r){
+      const oldLevel=Math.max(1,Math.min(5,Number(emp.currentSkillLevel||emp.skillLevel||1)||1));
+      const rule=examLevelRules[oldLevel]||examLevelRules[1];
+      r={oldLevel,targetLevel:rule.target,quarter:rule.quarter,setName:rule.name,topics:[]};
+    }
+    const employeeMode=document.body.classList.contains('employee-exam-mode')||!!window.currentPortalEmployee;
+    const q=employeeMode?r.quarter:(onlineExamQuarter.value||r.quarter||'Q1');
+    const qs=examQuestionBank[q]||examQuestionBank.Q1||[];
+    if(!qs.length){alert('ยังไม่มีข้อสอบสำหรับ '+q);return;}
+    if(employeeMode&&onlineExamQuarter)onlineExamQuarter.value=q;
+    onlineExamArea.classList.remove('hidden');
+    onlineExamResult.classList.add('hidden');
+    document.getElementById('onlineExamStatus').textContent=`กำลังทำ ${q} · ${qs.length} ข้อ`;
+    onlineExamArea.innerHTML=`<form id="onlineExamForm"><h3>${q} — Online Examination</h3><div class="notice"><b>${emp.id||emp.employeeId||'-'} — ${(emp.name||'').toUpperCase()}</b><br>ชุดข้อสอบตาม Skill Level ปัจจุบัน: Level ${r.oldLevel} → Level ${r.targetLevel}</div>${qs.map((x,i)=>`<div class="question-card"><h4>${i+1}. ${x.q}</h4>${x.c.map((c,j)=>`<label class="answer-option"><input type="radio" name="q${i}" value="${j}" required>${c}</label>`).join('')}</div>`).join('')}<button class="btn" type="submit">ส่งข้อสอบและตรวจคะแนน</button></form>`;
+    const form=document.getElementById('onlineExamForm');
+    if(form)form.onsubmit=submitOnlineExam;
+    onlineExamArea.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(err){
+    console.error('Start examination error:',err);
+    alert('ไม่สามารถเปิดข้อสอบได้: '+(err.message||err));
+  }
+}
+window.startOnlineExamination=startOnlineExamination;
+document.getElementById('startOnlineExam').onclick=startOnlineExamination;
 async function submitOnlineExam(ev){
 ev.preventDefault();
 const emp=currentOnlineEmployee();
@@ -2932,6 +2963,8 @@ select:disabled{opacity:.65!important;cursor:not-allowed!important}
         sel.value=opt.value;
       }
       if(typeof refreshExamLock==='function')refreshExamLock();
+      const startBtn=$('startOnlineExam');
+      if(startBtn&&typeof window.startOnlineExamination==='function')startBtn.onclick=window.startOnlineExamination;
       const badge=$('userBadge'); if(badge)badge.textContent=`ผู้เข้าสอบ: ${emp.id||'-'} — ${(emp.name||'').toUpperCase()}`;
       const first=page.querySelector('.panel');
       let identity=$('employeeIdentity'); if(first&&!identity){identity=document.createElement('div');identity.id='employeeIdentity';identity.className='notice';first.insertBefore(identity,first.children[1]||null);}
@@ -2958,4 +2991,49 @@ select:disabled{opacity:.65!important;cursor:not-allowed!important}
 </script>
 
 <!-- v52: fixed employee portal access to module-scoped employee data -->
+
+<!-- v55: repair Section Skill Matrix and Employee Skill Card dropdowns -->
+<script id="v55SkillDropdownRepair">
+(function(){
+  const defaults=['Engineering Support Section','Stamping Section','Welding Section','CNC Section','Tapping Section','Bending Section','Sorting Section','Machine Maintenance Section','Tooling Maintenance Section'];
+  const norm=v=>String(v||'').trim().replace(/\s+/g,' ');
+  const esc=v=>String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  function employees(){try{return typeof window.getProductionEmployees==='function'?(window.getProductionEmployees()||[]):[]}catch(e){return []}}
+  function sections(){
+    const set=new Set(defaults);
+    employees().forEach(e=>{const sec=norm(e&&e.section);if(sec)set.add(sec)});
+    document.querySelectorAll('select[id$="Section"] option').forEach(o=>{const v=norm(o.value||o.textContent);if(v&&!/^เลือก|^select/i.test(v))set.add(v)});
+    return [...set];
+  }
+  function fillSection(id){
+    const el=document.getElementById(id);if(!el)return;
+    const old=el.value;const list=sections();
+    el.disabled=false;el.style.pointerEvents='auto';el.style.opacity='1';el.style.position='relative';el.style.zIndex='20';
+    el.innerHTML='<option value="">เลือก Section</option>'+list.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('');
+    if(list.includes(old))el.value=old;else if(list.includes('Stamping Section'))el.value='Stamping Section';
+  }
+  function employeeKey(e,i){return encodeURIComponent(String(e.docId||e.id||i))}
+  function fillCardEmployees(){
+    const secEl=document.getElementById('skillCardSection'),el=document.getElementById('skillCardEmployee');if(!el)return;
+    const old=el.value,sec=norm(secEl&&secEl.value);
+    const list=employees().map((e,i)=>({e,i})).filter(x=>!sec||norm(x.e.section)===sec).sort((a,b)=>String(a.e.name||'').localeCompare(String(b.e.name||'')));
+    el.disabled=false;el.style.pointerEvents='auto';el.style.opacity='1';el.style.position='relative';el.style.zIndex='20';
+    el.innerHTML='<option value="">เลือกพนักงาน ('+list.length+' คน)</option>'+list.map(x=>'<option value="'+employeeKey(x.e,x.i)+'">'+esc(x.e.id||'-')+' — '+esc(String(x.e.name||'').toUpperCase())+'</option>').join('');
+    if([...el.options].some(o=>o.value===old))el.value=old;
+  }
+  function dispatch(el){if(el)el.dispatchEvent(new Event('change',{bubbles:true}))}
+  function repair(){
+    fillSection('skillMatrixSection');fillSection('skillCardSection');fillCardEmployees();
+    const sm=document.getElementById('skillMatrixSection'),sc=document.getElementById('skillCardSection');
+    if(sm&&!sm.dataset.v55ready){sm.dataset.v55ready='1';sm.addEventListener('change',()=>setTimeout(()=>{try{if(typeof window.renderSectionSkillMatrix==='function')window.renderSectionSkillMatrix()}catch(e){}},0))}
+    if(sc&&!sc.dataset.v55ready){sc.dataset.v55ready='1';sc.addEventListener('change',()=>{setTimeout(fillCardEmployees,0)})}
+    document.querySelectorAll('#sectionSkillMatrix select,#skillCards select').forEach(el=>{el.disabled=false;el.style.pointerEvents='auto';el.style.cursor='pointer'});
+    dispatch(sm);dispatch(sc);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(repair,700));else setTimeout(repair,700);
+  setTimeout(repair,1800);setTimeout(repair,3500);
+  window.repairSkillDropdowns=repair;
+})();
+</script>
+
 </body></html>
