@@ -37,3 +37,11 @@ Version 36 เพิ่ม Dropdown มาตรฐาน:
 
 
 Version 38: ปรับ Dropdown รายชื่อพนักงาน ผู้ประเมิน และผู้อนุมัติทุกหน้าให้พิมพ์ค้นหาชื่อ/รหัสได้ พร้อมรองรับคีย์บอร์ดและรายชื่อที่โหลดภายหลังจาก Firebase
+
+
+Version 39
+- Dropdown พนักงานทุกหน้าดึงข้อมูลจาก Organization/Employees
+- ต้องเลือก Section ก่อน แล้วจะแสดงเฉพาะพนักงานของ Section นั้น
+- รองรับ Evaluation Plan, Online Examination, Employee Skill Card และ Skill Matrix Examination
+- เพิ่มช่อง Section ในหน้า Skill Matrix Examination
+- Dropdown รายชื่อยังสามารถพิมพ์ค้นหาชื่อหรือรหัสพนักงานได้
