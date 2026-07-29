@@ -2385,7 +2385,10 @@ const examLevelRules={
 function employeeBaselineLevel(emp){const vals=Object.values(employeeSkillLevels(emp)).map(Number).filter(Number.isFinite);return vals.length?Math.max(1,Math.min(5,Math.min(...vals))):Math.max(1,Math.min(5,Number(emp.currentSkillLevel||1)));}
 function employeeExamRequirement(emp){if(!emp)return null;const oldLevel=employeeBaselineLevel(emp),rule=examLevelRules[oldLevel]||examLevelRules[1],dates=skillDates(emp),skills=employeeSkillLevels(emp),topics=Object.entries(skills).filter(([,v])=>Number(v)===oldLevel).map(([k])=>k),hasPreviousReview=!!emp.skillUpdatedAt;return {oldLevel,targetLevel:rule.target,quarter:rule.quarter,setName:rule.name,dueDate:hasPreviousReview?dates.next:isoDate(new Date()),days:hasPreviousReview?dates.days:0,isDue:!hasPreviousReview||dates.days<=0,topics:topics.length?topics:Object.keys(skills),hasPreviousReview};}
 function renderOnlineExamEmployees(){const section=onlineExamSection.value;const previous=onlineExamEmployee.value;const list=employees.filter(e=>!section||normalizedSection(e.section)===normalizedSection(section)).sort((a,b)=>(a.name||'').localeCompare(b.name||''));onlineExamEmployee.innerHTML='<option value="">เลือกพนักงาน ('+list.length+' คน)</option>'+list.map(e=>`<option value="${e.docId||employees.indexOf(e)}">${e.id||'-'} — ${(e.name||'').toUpperCase()}</option>`).join('');if([...onlineExamEmployee.options].some(o=>o.value===previous))onlineExamEmployee.value=previous;else onlineExamEmployee.value='';onlineExamEmployee.disabled=false;}
-function currentOnlineEmployee(){return resolveEmployee(onlineExamEmployee.value);}
+function currentOnlineEmployee(){
+  if(document.body.classList.contains('employee-exam-mode')&&window.currentPortalEmployee)return window.currentPortalEmployee;
+  return resolveEmployee(onlineExamEmployee.value);
+}
 function refreshExamLock(){
  const emp=currentOnlineEmployee(),box=document.getElementById('examLockBox'),startBtn=document.getElementById('startOnlineExam'),printBtn=document.getElementById('printExamSkillBtn');
  const employeeMode=document.body.classList.contains('employee-exam-mode');
@@ -2909,7 +2912,7 @@ select:disabled{opacity:.65!important;cursor:not-allowed!important}
         if(!emp)await new Promise(r=>setTimeout(r,250));
       }
       if(!emp)return showError('ไม่พบรหัสพนักงาน หรือข้อมูลพนักงานยังไม่ถูกซิงก์ กรุณาตรวจสอบรหัสแล้วลองอีกครั้ง');
-      portalEmployee=emp; sessionStorage.setItem('employeeExamId',String(emp.id||emp.employeeId||''));
+      portalEmployee=emp; window.currentPortalEmployee=emp; sessionStorage.setItem('employeeExamId',String(emp.id||emp.employeeId||''));
       $('employeePortalModal').classList.remove('show'); document.body.classList.add('employee-exam-mode');
       document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
       document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -2919,8 +2922,14 @@ select:disabled{opacity:.65!important;cursor:not-allowed!important}
       if(typeof renderOnlineExamEmployees==='function')renderOnlineExamEmployees();
       const sel=$('onlineExamEmployee');
       if(sel){
-        const opt=[...sel.options].find(o=>norm(o.value)===norm(emp.id)||norm(o.textContent).includes(norm(emp.id)));
-        if(opt){sel.value=opt.value;}
+        let opt=[...sel.options].find(o=>norm(o.value)===norm(emp.id)||norm(o.textContent).includes(norm(emp.id)));
+        if(!opt){
+          opt=document.createElement('option');
+          opt.value=emp.docId||String((employeeList()||[]).indexOf(emp));
+          opt.textContent=`${emp.id||'-'} — ${(emp.name||'').toUpperCase()}`;
+          sel.appendChild(opt);
+        }
+        sel.value=opt.value;
       }
       if(typeof refreshExamLock==='function')refreshExamLock();
       const badge=$('userBadge'); if(badge)badge.textContent=`ผู้เข้าสอบ: ${emp.id||'-'} — ${(emp.name||'').toUpperCase()}`;
@@ -2932,14 +2941,14 @@ select:disabled{opacity:.65!important;cursor:not-allowed!important}
     finally{btn.disabled=false;btn.textContent='เข้าสู่หน้าทดสอบ';}
   }
   function exitPortal(){
-    sessionStorage.removeItem('employeeExamId'); portalEmployee=null; document.body.classList.remove('employee-exam-mode');
+    sessionStorage.removeItem('employeeExamId'); portalEmployee=null; window.currentPortalEmployee=null; document.body.classList.remove('employee-exam-mode');
     const sel=$('onlineExamEmployee');if(sel)sel.disabled=false;
     const identity=$('employeeIdentity');if(identity)identity.remove();
     const badge=$('userBadge');if(badge)badge.textContent=(window.auth&&auth.currentUser)?auth.currentUser.email:'Public Viewer';
     const orgBtn=document.querySelector('nav button[data-page="organization"]');if(orgBtn)orgBtn.click();
   }
   function init(){
-    sessionStorage.removeItem('employeeExamId');document.body.classList.remove('employee-exam-mode');addHeaderButtons();
+    sessionStorage.removeItem('employeeExamId');window.currentPortalEmployee=null;document.body.classList.remove('employee-exam-mode');addHeaderButtons();
     if($('employeePortalEnter'))$('employeePortalEnter').onclick=enterPortal;
     if($('employeePortalCancel'))$('employeePortalCancel').onclick=()=>$('employeePortalModal').classList.remove('show');
     if($('employeePortalId'))$('employeePortalId').addEventListener('keydown',e=>{if(e.key==='Enter')enterPortal()});
