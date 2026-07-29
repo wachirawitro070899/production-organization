@@ -2783,4 +2783,53 @@ bindExportCenter();
 })();
 </script>
 
+
+<!-- ===== v38 searchable employee/person dropdowns ===== -->
+<style>
+.person-search-select{position:relative;width:100%}.person-search-select .pss-input{width:100%;min-height:42px;padding:9px 38px 9px 12px;border:1px solid #c8d3e1;border-radius:8px;background:#fff;font:inherit;box-sizing:border-box}.person-search-select .pss-input:focus{outline:2px solid rgba(25,92,160,.22);border-color:#195ca0}.person-search-select .pss-arrow{position:absolute;right:12px;top:11px;pointer-events:none;color:#344054}.person-search-select .pss-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:10000;max-height:280px;overflow:auto;background:#fff;border:1px solid #c8d3e1;border-radius:9px;box-shadow:0 12px 28px rgba(16,24,40,.16);display:none}.person-search-select.open .pss-list{display:block}.person-search-select .pss-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #eef2f6;line-height:1.35}.person-search-select .pss-item:last-child{border-bottom:0}.person-search-select .pss-item:hover,.person-search-select .pss-item.active{background:#eef5ff}.person-search-select .pss-empty{padding:12px;color:#667085;text-align:center}.person-search-select select.pss-native{position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important;left:0!important;bottom:0!important}
+</style>
+<script>
+(function(){
+ const ids=['onlineExamEmployee','evalEmployee','skillCardEmployee','examEmployee','onlineExamEvaluator','evalEvaluator','observationEvaluator','examEvaluator','skillCardApprover'];
+ const instances=new Map();
+ function norm(v){return String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim()}
+ function enhance(sel){
+   if(!sel||instances.has(sel)||sel.dataset.searchEnhanced==='1')return;
+   sel.dataset.searchEnhanced='1';sel.classList.add('pss-native');
+   const wrap=document.createElement('div');wrap.className='person-search-select';
+   const input=document.createElement('input');input.type='text';input.className='pss-input';input.autocomplete='off';input.placeholder=sel.id.toLowerCase().includes('employee')?'พิมพ์ชื่อหรือรหัสพนักงาน...':'พิมพ์ค้นหาชื่อ...';
+   const arrow=document.createElement('span');arrow.className='pss-arrow';arrow.textContent='⌄';
+   const list=document.createElement('div');list.className='pss-list';
+   sel.parentNode.insertBefore(wrap,sel);wrap.append(input,arrow,list,sel);
+   let rows=[];
+   function syncRows(){
+     rows=[...sel.options].map((o,i)=>({value:o.value,text:o.textContent.trim(),disabled:o.disabled,index:i}));
+     const chosen=rows.find(r=>r.value===sel.value);
+     if(document.activeElement!==input)input.value=chosen&&chosen.value?chosen.text:'';
+     render(input.value && document.activeElement===input?input.value:'');
+   }
+   function render(q){
+     const nq=norm(q);const filtered=rows.filter(r=>!r.disabled&&r.value!==''&&(!nq||norm(r.text).includes(nq)));
+     list.innerHTML='';
+     if(!filtered.length){const e=document.createElement('div');e.className='pss-empty';e.textContent='ไม่พบรายชื่อ';list.appendChild(e);return}
+     filtered.slice(0,250).forEach(r=>{const item=document.createElement('div');item.className='pss-item';item.textContent=r.text;item.dataset.value=r.value;item.onclick=()=>choose(r);list.appendChild(item)});
+   }
+   function choose(r){sel.value=r.value;input.value=r.text;wrap.classList.remove('open');sel.dispatchEvent(new Event('change',{bubbles:true}));sel.dispatchEvent(new Event('input',{bubbles:true}))}
+   input.addEventListener('focus',()=>{input.select();render(input.value);wrap.classList.add('open')});
+   input.addEventListener('click',()=>{render(input.value);wrap.classList.add('open')});
+   input.addEventListener('input',()=>{render(input.value);wrap.classList.add('open');if(!input.value){sel.value='';sel.dispatchEvent(new Event('change',{bubbles:true}))}});
+   input.addEventListener('keydown',e=>{const items=[...list.querySelectorAll('.pss-item')];let i=items.findIndex(x=>x.classList.contains('active'));if(e.key==='ArrowDown'){e.preventDefault();i=Math.min(i+1,items.length-1);items.forEach(x=>x.classList.remove('active'));if(items[i]){items[i].classList.add('active');items[i].scrollIntoView({block:'nearest'})}}else if(e.key==='ArrowUp'){e.preventDefault();i=Math.max(i-1,0);items.forEach(x=>x.classList.remove('active'));if(items[i]){items[i].classList.add('active');items[i].scrollIntoView({block:'nearest'})}}else if(e.key==='Enter'&&items.length){e.preventDefault();const pick=items[i>=0?i:0];pick&&pick.click()}else if(e.key==='Escape'){wrap.classList.remove('open')}});
+   sel.addEventListener('change',()=>{const chosen=rows.find(r=>r.value===sel.value);input.value=chosen&&chosen.value?chosen.text:''});
+   new MutationObserver(syncRows).observe(sel,{childList:true,subtree:true,attributes:true});
+   instances.set(sel,{syncRows});syncRows();
+ }
+ function scan(){ids.forEach(id=>enhance(document.getElementById(id)))}
+ document.addEventListener('click',e=>document.querySelectorAll('.person-search-select.open').forEach(w=>{if(!w.contains(e.target))w.classList.remove('open')}));
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',scan);else scan();
+ new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
+ const timer=setInterval(scan,1000);setTimeout(()=>clearInterval(timer),20000);
+})();
+</script>
+<!-- ===== END v38 ===== -->
+
 </body></html>
