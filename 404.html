@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<!-- Version 35: Locked Exam Assignment from Previous Skill Matrix -->
+<!-- Version 36: Locked Exam Assignment from Previous Skill Matrix -->
 <title>JINRONG - Production Organization System</title>
 <style>
 :root{--p:#1f4e79;--p2:#2f75b5;--bg:#f4f7fb;--card:#fff;--text:#1f2937;--muted:#6b7280;--line:#dbe3ec;--danger:#b42318}
@@ -90,7 +90,7 @@ form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}label{f
 <label>พนักงาน<select id="onlineExamEmployee"></select></label>
 <label>Section<select id="onlineExamSection"></select></label>
 <label>ไตรมาส<select id="onlineExamQuarter"><option value="Q1">Q1 Safety & Quality</option><option value="Q2">Q2 Machine Operation</option><option value="Q3">Q3 Quality Improvement</option><option value="Q4">Q4 Skill Upgrade</option></select></label>
-<label>ผู้ประเมิน<input id="onlineExamEvaluator" placeholder="ชื่อผู้ประเมิน"></label>
+<label>ผู้ประเมิน<select id="onlineExamEvaluator"><option value="">เลือกผู้ประเมิน</option></select></label>
 </div>
 <div id="examLockBox" class="exam-lock-box locked"><b>🔒 ระบบล็อกชุดข้อสอบตาม Skill Matrix เดิม</b><div id="examLockMessage" class="exam-note" style="margin-top:5px">เลือกพนักงานเพื่อตรวจสอบชุดข้อสอบและวันครบกำหนด</div><div class="exam-lock-grid"><div><div class="exam-lock-label">Skill เดิม</div><div id="examOldLevel" class="exam-lock-value">-</div></div><div><div class="exam-lock-label">ชุดข้อสอบที่กำหนด</div><div id="examAssignedSet" class="exam-lock-value">-</div></div><div><div class="exam-lock-label">เป้าหมายใหม่</div><div id="examTargetLevel" class="exam-lock-value">-</div></div><div><div class="exam-lock-label">ครบกำหนดประเมิน</div><div id="examDueDate" class="exam-lock-value">-</div></div></div><div id="examLockedTopics" class="exam-topic-lock"></div></div>
 <div style="margin-top:13px;display:flex;gap:9px;flex-wrap:wrap"><button id="startOnlineExam" class="btn" disabled>🔒 เริ่มทำข้อสอบ</button><button id="printExamSkillBtn" type="button" class="btn secondary" disabled>🔒 พิมพ์ข้อสอบ + Skill Matrix / บันทึก PDF</button></div>
@@ -113,16 +113,16 @@ form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}label{f
 <section id="skillCards" class="page">
   <div class="panel no-print">
     <div class="exam-head"><div><h2 style="margin:0 0 5px">Employee Skill Card</h2><div class="exam-note">บัตรประจำตัวทักษะสำหรับพกติดตัวเมื่อไปประจำเครื่องจักร</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="printSkillCardBtn" class="btn secondary">พิมพ์บัตรที่เลือก / PDF</button><button id="printSectionCardsBtn" class="btn secondary">พิมพ์บัตรทั้ง Section / PDF</button></div></div>
-    <div class="sort-controls" style="margin-top:14px"><label>Section<select id="skillCardSection"></select></label><label>พนักงาน<select id="skillCardEmployee"></select></label><label>เครื่องจักร/พื้นที่ประจำ<input id="skillCardMachine" placeholder="เช่น Press Machine 01"></label><label>ผู้อนุมัติ<input id="skillCardApprover" placeholder="Production Manager"></label></div>
+    <div class="sort-controls" style="margin-top:14px"><label>Section<select id="skillCardSection"></select></label><label>พนักงาน<select id="skillCardEmployee"></select></label><label>เครื่องจักร/พื้นที่ประจำ<select id="skillCardMachine"><option value="">เลือกเครื่องจักร/พื้นที่</option></select></label><label>ผู้อนุมัติ<select id="skillCardApprover"><option value="">เลือกผู้อนุมัติ</option></select></label></div>
   </div>
   <div class="panel"><div id="skillCardPreview"></div></div>
 </section>
-<section id="skillMatrix" class="page"><div class="report-actions no-print"><button id="printSkillMatrixBtn" class="btn secondary">พิมพ์ข้อสอบ + Skill Matrix / บันทึก PDF</button></div><div class="panel"><h2>Skill Matrix Examination</h2><p style="color:var(--muted)">บันทึกผลสอบเพื่อปรับระดับ Skill Matrix ของพนักงาน</p><form id="skillExamForm"><div><label>พนักงาน<select id="examEmployee" required></select></label></div><div><label>หัวข้อทักษะ<input id="examTopic" required placeholder="เช่น Setup Machine / Quality Check"></label></div><div><label>คะแนน<input id="examScore" type="number" min="0" max="100" required></label></div><div><label>ผู้ประเมิน<input id="examEvaluator" required></label></div><div><label>วันที่ประเมิน<input id="examDate" type="date" required></label></div><div><label>ระดับใหม่<select id="examLevel"><option value="auto">คำนวณจากคะแนนอัตโนมัติ</option><option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option><option value="4">Level 4</option><option value="5">Level 5</option></select></label></div><div class="full"><button class="btn admin-only hidden" type="submit">บันทึกผลสอบ</button><div id="examViewerNote" class="notice">ผู้เข้าชมสามารถดูผลได้ แต่ต้อง Login เป็น Admin เพื่อบันทึก</div></div></form></div><div class="panel"><h2>Assessment Records</h2><div style="overflow:auto"><table><thead><tr><th>วันที่</th><th>รหัส</th><th>ชื่อ</th><th>Section</th><th>หัวข้อ</th><th>คะแนน</th><th>ผล</th><th>Skill Level</th><th>ผู้ประเมิน</th></tr></thead><tbody id="examResults"></tbody></table></div></div></section>
+<section id="skillMatrix" class="page"><div class="report-actions no-print"><button id="printSkillMatrixBtn" class="btn secondary">พิมพ์ข้อสอบ + Skill Matrix / บันทึก PDF</button></div><div class="panel"><h2>Skill Matrix Examination</h2><p style="color:var(--muted)">บันทึกผลสอบเพื่อปรับระดับ Skill Matrix ของพนักงาน</p><form id="skillExamForm"><div><label>พนักงาน<select id="examEmployee" required></select></label></div><div><label>หัวข้อทักษะ<select id="examTopic" required><option value="">เลือกหัวข้อทักษะ</option></select></label></div><div><label>คะแนน<input id="examScore" type="number" min="0" max="100" required></label></div><div><label>ผู้ประเมิน<select id="examEvaluator" required><option value="">เลือกผู้ประเมิน</option></select></label></div><div><label>วันที่ประเมิน<input id="examDate" type="date" required></label></div><div><label>ระดับใหม่<select id="examLevel"><option value="auto">คำนวณจากคะแนนอัตโนมัติ</option><option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option><option value="4">Level 4</option><option value="5">Level 5</option></select></label></div><div class="full"><button class="btn admin-only hidden" type="submit">บันทึกผลสอบ</button><div id="examViewerNote" class="notice">ผู้เข้าชมสามารถดูผลได้ แต่ต้อง Login เป็น Admin เพื่อบันทึก</div></div></form></div><div class="panel"><h2>Assessment Records</h2><div style="overflow:auto"><table><thead><tr><th>วันที่</th><th>รหัส</th><th>ชื่อ</th><th>Section</th><th>หัวข้อ</th><th>คะแนน</th><th>ผล</th><th>Skill Level</th><th>ผู้ประเมิน</th></tr></thead><tbody id="examResults"></tbody></table></div></div></section>
 </main></div>
 <section id="organizationPrintReport" class="print-report"></section>
 <section id="examSkillPrintReport" class="print-report"></section><section id="sectionSkillPrintReport" class="print-report"></section><section id="skillCardPrintReport" class="print-report"></section><section id="genericPrintReport" class="print-report"></section>
 <input id="changePhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
-<div id="editModal" class="modal"><div class="modal-card employee-edit-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;position:sticky;top:0;background:#fff;z-index:5;padding:4px 0 10px"><h2 style="margin:0">แก้ไขข้อมูลพนักงาน</h2><button type="submit" form="editEmployeeForm" class="btn">💾 เซฟข้อมูล</button></div><form id="editEmployeeForm"><div><label>รหัสพนักงาน<input id="editEmpId" required></label></div><div><label>ชื่อภาษาไทย<input id="editThaiName"></label></div><div class="full"><label>ชื่อภาษาอังกฤษ<input id="editEmpName" required style="text-transform:uppercase"></label></div><div><label>เพศ<select id="editGender"><option value="">-</option><option>Male</option><option>Female</option></select></label></div><div><label>สัญชาติ<input id="editNationality"></label></div><div><label>วันที่เริ่มงาน<input id="editStartDate" type="date" required></label></div><div><label>ประเภทสัญญา<select id="editContractType"><option>Permanent</option><option>Subcontractor</option><option>Temporary</option></select></label></div><div><label>เบอร์โทรติดต่อ<input id="editEmpPhone" type="tel"></label></div><div><label>Section<select id="editEmpSection" required></select></label></div><div><label>ตำแหน่ง<select id="editEmpPosition" required></select></label></div><div class="full modal-actions edit-save-actions"><button type="button" id="cancelEdit" class="btn secondary">ยกเลิก</button><button type="submit" class="btn">💾 เซฟและบันทึกข้อมูล</button></div></form></div></div>
+<div id="editModal" class="modal"><div class="modal-card employee-edit-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;position:sticky;top:0;background:#fff;z-index:5;padding:4px 0 10px"><h2 style="margin:0">แก้ไขข้อมูลพนักงาน</h2><button type="submit" form="editEmployeeForm" class="btn">💾 เซฟข้อมูล</button></div><form id="editEmployeeForm"><div><label>รหัสพนักงาน<input id="editEmpId" required></label></div><div><label>ชื่อภาษาไทย<input id="editThaiName"></label></div><div class="full"><label>ชื่อภาษาอังกฤษ<input id="editEmpName" required style="text-transform:uppercase"></label></div><div><label>เพศ<select id="editGender"><option value="">-</option><option>Male</option><option>Female</option></select></label></div><div><label>สัญชาติ<select id="editNationality"><option value="">เลือกสัญชาติ</option><option value="Thai">Thai / ไทย</option><option value="Cambodian">Cambodian / กัมพูชา</option><option value="Myanmar">Myanmar / เมียนมา</option><option value="Laotian">Laotian / ลาว</option><option value="Chinese">Chinese / จีน</option><option value="Other">Other / อื่น ๆ</option></select></label></div><div><label>วันที่เริ่มงาน<input id="editStartDate" type="date" required></label></div><div><label>ประเภทสัญญา<select id="editContractType"><option>Permanent</option><option>Subcontractor</option><option>Temporary</option></select></label></div><div><label>เบอร์โทรติดต่อ<input id="editEmpPhone" type="tel"></label></div><div><label>Section<select id="editEmpSection" required></select></label></div><div><label>ตำแหน่ง<select id="editEmpPosition" required></select></label></div><div class="full modal-actions edit-save-actions"><button type="button" id="cancelEdit" class="btn secondary">ยกเลิก</button><button type="submit" class="btn">💾 เซฟและบันทึกข้อมูล</button></div></form></div></div>
 <div id="photoStatus" class="notice hidden" style="position:fixed;right:16px;bottom:16px;z-index:50;max-width:360px"></div><div id="loginModal" class="modal"><div class="modal-card"><h2>Admin Login</h2><p style="color:#6b7280">เข้าสู่ระบบด้วยบัญชีที่สร้างไว้ใน Firebase Authentication</p><label>Email<input id="loginEmail" type="email" autocomplete="username"></label><br><br><label>Password<input id="loginPassword" type="password" autocomplete="current-password"></label><div id="loginError" style="color:#b42318;margin-top:10px"></div><div class="modal-actions"><button id="cancelLogin" class="btn secondary">ยกเลิก</button><button id="submitLogin" class="btn">เข้าสู่ระบบ</button></div></div></div>
 <script type="module">
 import { firebaseConfig } from './firebase-config.js';
@@ -2404,6 +2404,48 @@ examDate.value=new Date().toISOString().slice(0,10);
 // ===== v15 SECTION SKILL MATRIX + SKILL CARD =====
 const sectionSkills=examSkillTopics;
 const skillSections=Object.keys(sectionSkills);
+
+// Version 36: Master dropdown data for all repeatable/categorical fields.
+const machineMaster={
+  'Engineering Support Section':['Production Support Area','Process Engineering Area','Inspection Support Area'],
+  'Stamping Section':['Press Machine 01','Press Machine 02','Press Machine 03','Press Machine 08','Material Loading Area','Die Setup Area'],
+  'Welding Section':['Spot Welding 01','Spot Welding 02','Nut Welding','Welding Jig Area','Destructive Test Area'],
+  'CNC Section':['CNC Machine 01','CNC Machine 02','CNC Machine 03','Tool Setting Area'],
+  'Sorting Section':['Sorting Table 01','Sorting Table 02','Final Inspection Area'],
+  'Tapping Section':['Tapping Machine 01','Tapping Machine 02','Thread Inspection Area'],
+  'Bending Section':['Bending Machine 01','Bending Machine 02','Angle Inspection Area'],
+  'Machine Maintenance Section':['Machine Maintenance Workshop','PM Area','Utility Area'],
+  'Tooling Maintenance Section':['Tooling Workshop','Mold PM Area','Mold Repair Area']
+};
+function uniqueValues(values){return [...new Set(values.filter(Boolean).map(v=>String(v).trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));}
+function setSelectOptions(el,values,placeholder,selected=''){
+  if(!el)return;
+  const keep=selected||el.value||'';
+  el.innerHTML=`<option value="">${placeholder}</option>`+uniqueValues(values).map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  if(keep && [...el.options].some(o=>o.value===keep))el.value=keep;
+}
+function approverCandidates(){
+  const rx=/manager|supervisor|engineer|leader|technician|หัวหน้า|ผู้จัดการ|วิศวกร|ช่าง/i;
+  const names=employees.filter(e=>rx.test(String(e.position||''))).map(e=>e.name||e.thaiName);
+  return uniqueValues([...names,'Production Manager','Production Supervisor','Section Leader','Production Engineer','Quality Engineer']);
+}
+function machinesForSection(section){return machineMaster[section]||['Production Area','Machine 01','Machine 02','Inspection Area'];}
+function refreshCommonDropdowns(){
+  const empOnline=currentOnlineEmployee?.();
+  const section=empOnline?.section||document.getElementById('onlineExamSection')?.value||'';
+  const evaluators=approverCandidates();
+  setSelectOptions(document.getElementById('onlineExamEvaluator'),evaluators,'เลือกผู้ประเมิน');
+  setSelectOptions(document.getElementById('examEvaluator'),evaluators,'เลือกผู้ประเมิน');
+  setSelectOptions(document.getElementById('skillCardApprover'),evaluators,'เลือกผู้อนุมัติ',document.getElementById('skillCardApprover')?.value);
+  const cardEmp=typeof getCardEmployee==='function'?getCardEmployee():null;
+  const cardSection=cardEmp?.section||document.getElementById('skillCardSection')?.value||'';
+  setSelectOptions(document.getElementById('skillCardMachine'),machinesForSection(cardSection),'เลือกเครื่องจักร/พื้นที่',document.getElementById('skillCardMachine')?.value);
+  const examEmp=document.getElementById('examEmployee');
+  const selectedEmp=examEmp?.value?resolveEmployee(decodeURIComponent(examEmp.value)):null;
+  const examSection=selectedEmp?.section||section;
+  setSelectOptions(document.getElementById('examTopic'),sectionSkills[examSection]||[],'เลือกหัวข้อทักษะ',document.getElementById('examTopic')?.value);
+}
+
 function isoDate(d){return d.toISOString().slice(0,10)}
 function addMonthsISO(dateStr,months){const d=dateStr?new Date(dateStr+'T00:00:00'):new Date();if(isNaN(d))return isoDate(new Date());d.setMonth(d.getMonth()+months);return isoDate(d)}
 function quarterOf(d=new Date()){return 'Q'+(Math.floor(d.getMonth()/3)+1)}
@@ -2432,10 +2474,10 @@ function refreshSkillCardEmployees(){const sec=normalizedSection(scSection.value
 function getCardEmployee(){if(!scEmployee.value)return null;const k=decodeURIComponent(scEmployee.value);return employees.find((e,i)=>String(e.docId||'')===k||String(e.id||'')===k||String(i)===k)||null}
 function skillCardHTML(emp){if(!emp)return '<div class="empty">เลือกพนักงานเพื่อแสดง Skill Card</div>';const levels=employeeSkillLevels(emp),dates=skillDates(emp),machine=scMachine.value||emp.assignedMachine||'ระบุตามเครื่องจักรที่ได้รับมอบหมาย',approver=scApprover.value||emp.skillApprovedBy||'Production Manager';const qrData=encodeURIComponent(`${location.origin}${location.pathname}?view=employee-skill&employee=${encodeURIComponent(emp.id||emp.docId||'')}&section=${encodeURIComponent(emp.section||'')}`);return `<div class="skill-card"><div class="skill-card-head"><b>OPERATOR SKILL CARD</b><span>${esc(emp.section||'-')}</span></div><div class="skill-card-body"><img class="skill-card-photo" src="${emp.photoData||placeholderPhoto}"><div class="skill-card-info"><h2>${esc((emp.name||'-').toUpperCase())}</h2><div><b>Emp.ID:</b> ${esc(emp.id||'-')}</div><div><b>Position:</b> ${esc(emp.position||'-')}</div><div><b>Machine:</b> ${esc(machine)}</div><div><b>Last Update:</b> ${fmt(dates.last)}</div><div><b>Next Update:</b> ${fmt(dates.next)}</div><div class="card-valid"><b>Approved by:</b> ${esc(approver)}</div></div><div><img class="qr-img" alt="QR Employee" src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${qrData}"><div style="font-size:10px;text-align:center">SCAN EMPLOYEE</div></div><div class="skill-card-skills">${Object.entries(levels).map(([k,v])=>`<div class="skill-card-skill"><span>${esc(k)}</span>${levelCircle(v)}</div>`).join('')}</div></div></div>`}
 function renderSkillCardPreview(){document.getElementById('skillCardPreview').innerHTML=skillCardHTML(getCardEmployee())}
-scSection.onchange=refreshSkillCardEmployees;scEmployee.onchange=()=>{const emp=getCardEmployee();scMachine.value=emp?.assignedMachine||'';scApprover.value=emp?.skillApprovedBy||'';renderSkillCardPreview()};
+scSection.onchange=()=>{refreshSkillCardEmployees();refreshCommonDropdowns()};scEmployee.onchange=()=>{const emp=getCardEmployee();refreshCommonDropdowns();scMachine.value=emp?.assignedMachine||'';scApprover.value=emp?.skillApprovedBy||'';renderSkillCardPreview()};
 let skillCardAutoSaveTimer;
 function autoSaveSkillCardToComputer(){clearTimeout(skillCardAutoSaveTimer);skillCardAutoSaveTimer=setTimeout(()=>{const emp=getCardEmployee();if(!emp)return;emp.assignedMachine=scMachine.value.trim();emp.skillApprovedBy=scApprover.value.trim();emp.skillUpdatedAt=new Date().toISOString();saveEmployeesToThisComputer();renderSkillCardPreview()},450)}
-scMachine.oninput=()=>{renderSkillCardPreview();autoSaveSkillCardToComputer()};scApprover.oninput=()=>{renderSkillCardPreview();autoSaveSkillCardToComputer()};
+scMachine.onchange=()=>{renderSkillCardPreview();autoSaveSkillCardToComputer()};scApprover.onchange=()=>{renderSkillCardPreview();autoSaveSkillCardToComputer()};
 async function saveSkillCardData(){if(!isAdmin)return alert('กรุณา Login เป็น Admin');const emp=getCardEmployee();if(!emp)return alert('กรุณาเลือกพนักงาน');const machine=scMachine.value.trim(),approver=scApprover.value.trim();if(!machine)return alert('กรุณากรอกเครื่องจักร/พื้นที่ประจำ');if(!approver)return alert('กรุณากรอกผู้อนุมัติ');const now=new Date().toISOString(),docId=String(emp.docId||emp.id||'').replace(/[^A-Za-z0-9_-]/g,'_');const update={assignedMachine:machine,skillApprovedBy:approver,skillUpdatedAt:now};Object.assign(emp,update,{docId});localStorage.setItem('productionEmployees',JSON.stringify(employees));try{if(configured)await api.setDoc(api.doc(db,'employees',docId),{...emp,...update},{merge:true});renderSkillCardPreview();alert('บันทึก Skill Card สำเร็จ');}catch(err){console.error(err);alert('บันทึกในหน้าเว็บแล้ว แต่ Firebase บันทึกไม่สำเร็จ: '+(err?.message||err));}}
 function printCards(allSection=false){const list=allSection?employees.filter(e=>e.section===scSection.value):[getCardEmployee()].filter(Boolean);if(!list.length)return alert('กรุณาเลือกพนักงาน');document.getElementById('skillCardPrintReport').innerHTML=`<div class="skill-card-grid">${list.map(skillCardHTML).join('')}</div>`;printReport('print-skill-card')}
 document.getElementById('printSkillCardBtn').onclick=()=>printCards(false);document.getElementById('printSectionCardsBtn').onclick=()=>printCards(true);
@@ -2559,7 +2601,7 @@ const v15RenderAll=renderAll;renderAll=function(){v15RenderAll();renderQrEmploye
 
 // ===== END v15 =====
 
-searchInput.oninput=renderSearch;function renderAll(){renderOrg();renderSection(filter.value);renderSectionChart(chartFilter.value);renderSearch();renderTrainingPlan();renderExamEmployees();renderOnlineExamEmployees();renderOnlineExamHistory();renderPracticalTest();refreshExamLock();renderSkillAssessments();renderExamApprovals();updateAuthUI(auth&&auth.currentUser);document.getElementById('examViewerNote').classList.toggle('hidden',isAdmin)}
+searchInput.oninput=renderSearch;function renderAll(){renderOrg();renderSection(filter.value);renderSectionChart(chartFilter.value);renderSearch();renderTrainingPlan();renderExamEmployees();renderOnlineExamEmployees();renderOnlineExamHistory();renderPracticalTest();refreshExamLock();renderSkillAssessments();renderExamApprovals();updateAuthUI(auth&&auth.currentUser);document.getElementById('examViewerNote').classList.toggle('hidden',isAdmin);refreshCommonDropdowns()}
 renderAll();
 setInterval(renderAll,3600000);
 

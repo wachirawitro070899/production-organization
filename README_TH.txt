@@ -1,4 +1,15 @@
-Production Organization Training Version 35
+Production Organization Training v37
+
+เพิ่มระบบ Evaluation Plan / Job Observation Plan
+- นำเข้าแผนเดือนกรกฎาคม 2026 จากไฟล์ 07-2026.xlsx: CNC, Bending, Stamping, Welding
+- กรอง Section, สถานะ, เดือน และค้นหาพนักงาน
+- เพิ่มแผนสำหรับพนักงานซัพเข้าใหม่, ซัพปรับประจำ, ประเมินประจำ, Skill Upgrade และ Re-evaluation
+- Job Observation Check Sheet 19 หัวข้อ
+- คำนวณคะแนนอัตโนมัติ ผ่านเมื่อคะแนนไม่น้อยกว่า 80% และไม่มี Critical Safety Fail
+- แสดงสถานะ Planned, Completed, Failed, Overdue
+- เก็บข้อมูลใน Local Storage และรองรับการพิมพ์/PDF
+
+Production Organization Training Version 36
 
 เพิ่มระบบล็อกชุดข้อสอบตาม Skill Matrix เดิม
 - ระบบอ่าน Level ต่ำสุดจากหัวข้อ Skill Matrix เดิม เพื่อกำหนดชุดข้อสอบ
@@ -15,3 +26,11 @@ Production Organization Training Version 35
 - ผลสอบไม่ผ่านจะไม่สามารถปรับ Level สูงขึ้น
 
 วิธีติดตั้ง: อัปโหลดไฟล์ทั้งหมดทับ Repository เดิม แล้วกด Ctrl+F5
+
+
+Version 36 เพิ่ม Dropdown มาตรฐาน:
+- ผู้ประเมินและผู้อนุมัติ
+- เครื่องจักร/พื้นที่ประจำตาม Section
+- หัวข้อทักษะตาม Skill Matrix ของ Section
+- สัญชาติ ประเภทสัญญา เพศ ตำแหน่ง Section และตัวกรองต่าง ๆ
+- ช่องที่เป็นข้อมูลเฉพาะ เช่น ชื่อ รหัส เบอร์โทร วันที่ คะแนน และหมายเหตุ ยังคงเป็นช่องกรอกตามความเหมาะสม
