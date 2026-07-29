@@ -2145,7 +2145,7 @@ const employeeSeedData = [
 
 const structures={"Engineering Support Section":["Production Manager","Production Engineer","Tooling Engineer","Welding Engineer"],"Support Production Section":["Production Planning","Document Control","Store"],"Stamping Section":["Supervisor","Leader","Operator"],"Welding Section":["Supervisor","Leader","Welding Engineer","Operator"],"Sorting Section":["Supervisor","Leader","Operator"],"CNC Section":["Supervisor","Leader","Operator"],"Tapping Section":["Leader","Operator"],"Bending Section":["Leader","Operator"],"Machine Maintenance Section":["Supervisor","Leader","Technician"],"Tooling Maintenance Section":["Supervisor","Leader","Technician"]};
 const thai={"Engineering Support Section":"หน่วยงานวิศวกรรมสนับสนุนการผลิต","Support Production Section":"หน่วยงานสนับสนุนการผลิต","Stamping Section":"หน่วยงานปั๊มขึ้นรูป","Welding Section":"หน่วยงานเชื่อม","Sorting Section":"หน่วยงานคัดแยก","CNC Section":"หน่วยงาน CNC","Tapping Section":"หน่วยงานต๊าปเกลียว","Bending Section":"หน่วยงานดัดขึ้นรูป","Machine Maintenance Section":"หน่วยงานซ่อมบำรุงเครื่องจักร","Tooling Maintenance Section":"หน่วยงานซ่อมบำรุงแม่พิมพ์"};
-let employees=[];let skillAssessments=[];let onlineExamRecords=[];let examAssignments=[];let isAdmin=false;let auth=null,db=null,api={};const configured=firebaseConfig&&firebaseConfig.apiKey&&!firebaseConfig.apiKey.includes('YOUR_');
+let employees=[];let skillAssessments=[];let onlineExamRecords=[];let examAssignments=[];let isAdmin=false;let auth=null,db=null,api={};window.getProductionEmployees=()=>employees;const configured=firebaseConfig&&firebaseConfig.apiKey&&!firebaseConfig.apiKey.includes('YOUR_');
 function mergeEmployeeSeed(firestoreEmployees=[]){
  const merged=new Map(employeeSeedData.map(item=>[String(item.id),{...item,createdAt:item.createdAt||new Date().toISOString()}]));
  for(const item of firestoreEmployees){
@@ -2875,7 +2875,11 @@ select:disabled{opacity:.65!important;cursor:not-allowed!important}
     setTimeout(()=>$('employeePortalId').focus(),50);
   }
   function employeeList(){
-    try{return Array.isArray(employees)?employees:[]}catch(e){return []}
+    try{
+      if(typeof window.getProductionEmployees==='function'){const list=window.getProductionEmployees();if(Array.isArray(list))return list;}
+      if(Array.isArray(window.employees))return window.employees;
+    }catch(e){console.warn('Employee list unavailable:',e)}
+    return [];
   }
   function findEmployee(id){
     const clean=norm(id); if(!clean)return null;
@@ -2944,5 +2948,5 @@ select:disabled{opacity:.65!important;cursor:not-allowed!important}
 })();
 </script>
 
-<!-- v50: repaired employee exam entry; supports alphanumeric IDs and delayed employee loading -->
+<!-- v52: fixed employee portal access to module-scoped employee data -->
 </body></html>
