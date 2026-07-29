@@ -2450,9 +2450,12 @@ function setSelectOptions(el,values,placeholder,selected=''){
   if(keep && [...el.options].some(o=>o.value===keep))el.value=keep;
 }
 function approverCandidates(){
-  const rx=/manager|supervisor|engineer|leader|technician|หัวหน้า|ผู้จัดการ|วิศวกร|ช่าง/i;
-  const names=employees.filter(e=>rx.test(String(e.position||''))).map(e=>e.name||e.thaiName);
-  return uniqueValues([...names,'Production Manager','Production Supervisor','Section Leader','Production Engineer','Quality Engineer']);
+  const targetSection='Engineering Support Section';
+  const normalize=v=>String(v||'').trim().replace(/\s+/g,' ').toLowerCase();
+  const names=employees
+    .filter(e=>normalize(e.section)===normalize(targetSection))
+    .map(e=>e.name||e.thaiName);
+  return uniqueValues(names);
 }
 function machinesForSection(section){return machineMaster[section]||['Production Area','Machine 01','Machine 02','Inspection Area'];}
 function refreshCommonDropdowns(){
