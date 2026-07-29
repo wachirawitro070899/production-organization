@@ -2388,22 +2388,29 @@ function addUniversalPrintButtons(){const map=[['section','พิมพ์ Secti
 addUniversalPrintButtons();
 
 const pageDownloadNames={organization:'Organization_Chart',section:'Section_Employee_List',sectionChart:'Section_Organization_Chart',add:'Add_Employee_Form',search:'Employee_Search_List',training:'Training_Plan',onlineExam:'Online_Examination',sectionSkillMatrix:'Section_Skill_Matrix',skillCards:'Employee_Skill_Card',skillMatrix:'Skill_Matrix_Examination',exportCenter:'Export_Center'};
-async function downloadPageToComputer(pageId){
-  const page=document.getElementById(pageId);if(!page)return;
-  const button=page.querySelector('.page-download-button');
-  try{
-    if(button){button.disabled=true;button.textContent='กำลังสร้าง PDF...'}
-    const canvas=await html2canvas(page,{scale:1.5,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,ignoreElements:el=>el.classList?.contains('page-download-button')});
-    const {jsPDF}=window.jspdf;const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
-    const pageW=297,pageH=210,margin=8,usableW=pageW-margin*2,usableH=pageH-margin*2;
-    const imgW=usableW;const imgH=canvas.height*imgW/canvas.width;const pxPerMm=canvas.width/imgW;const slicePx=Math.floor(usableH*pxPerMm);
-    let yPx=0,pageNo=0;
-    while(yPx<canvas.height){if(pageNo>0)pdf.addPage('a4','landscape');const hPx=Math.min(slicePx,canvas.height-yPx);const slice=document.createElement('canvas');slice.width=canvas.width;slice.height=hPx;slice.getContext('2d').drawImage(canvas,0,yPx,canvas.width,hPx,0,0,canvas.width,hPx);const sliceH=hPx/pxPerMm;pdf.addImage(slice.toDataURL('image/jpeg',0.92),'JPEG',margin,margin,imgW,sliceH);yPx+=hPx;pageNo++}
-    const stamp=new Date().toISOString().slice(0,10);pdf.save(`${pageDownloadNames[pageId]||pageId}_${stamp}.pdf`);showLocalSaveStatus('ดาวน์โหลด PDF ลงเครื่องแล้ว');
-  }catch(err){console.error(err);alert('ดาวน์โหลด PDF ไม่สำเร็จ: '+(err?.message||err));}
-  finally{if(button){button.disabled=false;button.textContent='⬇️ ดาวน์โหลดหน้านี้ PDF'}}
+function downloadPageToComputer(pageId){
+  // ใช้รูปแบบเดียวกับคำสั่งพิมพ์ เพื่อให้ PDF แสดงเฉพาะเอกสาร ไม่ติดเมนูหรือปุ่มบนหน้าจอ
+  if(pageId==='organization') return printReport('print-organization');
+  if(pageId==='sectionSkillMatrix') return buildSectionSkillPrint(false);
+  if(pageId==='skillCards') return printCards(false);
+  if(pageId==='onlineExam') return createPendingExamAndPrint();
+
+  const page=document.getElementById(pageId);
+  if(!page)return;
+  const titles={
+    section:'SECTION EMPLOYEE LIST',
+    sectionChart:'SECTION ORGANIZATION CHART',
+    add:'EMPLOYEE FORM',
+    search:'EMPLOYEE LIST',
+    training:'TRAINING PLAN',
+    skillMatrix:'SKILL ASSESSMENT RECORDS',
+    exportCenter:'EXPORT CENTER'
+  };
+  const clone=page.cloneNode(true);
+  clone.querySelectorAll('.no-print,.page-download-button,.universal-print,button').forEach(el=>el.remove());
+  printGeneric(titles[pageId]||pageDownloadNames[pageId]||pageId,clone.innerHTML);
 }
-function addDownloadButtonEveryPage(){document.querySelectorAll('main .page').forEach(page=>{if(page.querySelector('.page-download-button'))return;const wrap=document.createElement('div');wrap.className='report-actions no-print';wrap.style.cssText='display:flex;justify-content:flex-end;margin-bottom:10px';const b=document.createElement('button');b.type='button';b.className='btn page-download-button';b.textContent='⬇️ ดาวน์โหลดหน้านี้ PDF';b.onclick=()=>downloadPageToComputer(page.id);wrap.appendChild(b);page.prepend(wrap)})}
+function addDownloadButtonEveryPage(){document.querySelectorAll('main .page').forEach(page=>{if(page.querySelector('.page-download-button'))return;const wrap=document.createElement('div');wrap.className='report-actions no-print';wrap.style.cssText='display:flex;justify-content:flex-end;margin-bottom:10px';const b=document.createElement('button');b.type='button';b.className='btn page-download-button';b.textContent='⬇️ ดาวน์โหลด PDF (แบบพิมพ์)';b.onclick=()=>downloadPageToComputer(page.id);wrap.appendChild(b);page.prepend(wrap)})}
 addDownloadButtonEveryPage();
 const oldRenderAll=renderAll;renderAll=function(){oldRenderAll();renderSectionSkillMatrix();refreshSkillCardEmployees()};
 
@@ -2513,4 +2520,93 @@ bindExportCenter();
 // ===== END v28 =====
 
 </script>
+
+<!-- v32 bilingual UI labels: employee names and user-entered data are never translated -->
+<style>
+  .bilingual-badge{position:fixed;right:14px;top:12px;z-index:9999;background:#0f766e;color:#fff;border-radius:999px;padding:7px 12px;font-weight:700;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.16)}
+  @media print{.bilingual-badge{display:none!important}}
+</style>
+<div class="bilingual-badge no-print">🌐 ไทย / English</div>
+<script>
+(function(){
+  const dict = {
+    'หน้าหลัก':'Home','แดชบอร์ด':'Dashboard','ผังองค์กร':'Organization Chart','ข้อมูลพนักงาน':'Employees',
+    'เพิ่มพนักงาน':'Add Employee','ค้นหาพนักงาน':'Search Employee','พนักงาน':'Employee','พนักงานทั้งหมด':'Total Employees',
+    'เข้าใหม่เดือนนี้':'New This Month','ผู้ใช้งาน':'User','รูป':'Photo','รหัส':'ID','ชื่อ':'Name','เบอร์โทร':'Phone',
+    'ตำแหน่ง':'Position','วันที่เริ่มงาน':'Start Date','อายุงาน':'Service Length','จัดการ':'Actions','แก้ไข':'Edit','ลบ':'Delete',
+    'บันทึกพนักงาน':'Save Employee','แก้ไขข้อมูลพนักงาน':'Edit Employee Information','เซฟข้อมูล':'Save','เซฟและบันทึกข้อมูล':'Save Changes',
+    'ยกเลิก':'Cancel','ชื่อ-นามสกุล':'Full Name','ชื่อภาษาไทย':'Thai Name','ชื่อภาษาอังกฤษ':'English Name',
+    'เพศ':'Gender','สัญชาติ':'Nationality','ประเภทสัญญา':'Contract Type','เบอร์โทรติดต่อ':'Phone Number','รูปพนักงาน':'Employee Photo',
+    'ตัวอย่างรูปพนักงาน':'Employee Photo Preview','ทุกตำแหน่ง':'All Positions','เรียงตาม':'Sort By','ลำดับ':'Order',
+    'ลำดับตำแหน่ง':'Position Order','ชื่อพนักงาน':'Employee Name','รหัสพนักงาน':'Employee ID','ค้นหาใน Section':'Search in Section',
+    'น้อย → มาก / A → Z':'Ascending / A → Z','มาก → น้อย / Z → A':'Descending / Z → A',
+    'สกิลการ์ด':'Skill Card','สกิลแมททริกซ์':'Skill Matrix','ระดับทักษะ':'Skill Level','รอบประเมิน':'Evaluation Quarter',
+    'รอบปัจจุบันอัตโนมัติ':'Current Quarter (Auto)','ค้นหาพนักงาน':'Search Employee','ชื่อหรือรหัส':'Name or ID',
+    'สถานะ':'Status','ทั้งหมด':'All','ถึงกำหนด/เกินกำหนด':'Due / Overdue','ยังไม่ถึงกำหนด':'Not Due',
+    'พิมพ์ Skill Matrix / PDF':'Print Skill Matrix / PDF','พิมพ์ทุก Section / PDF':'Print All Sections / PDF',
+    'พิมพ์บัตรที่เลือก / PDF':'Print Selected Card / PDF','พิมพ์บัตรทั้ง Section / PDF':'Print Section Cards / PDF',
+    'เครื่องจักร/พื้นที่ประจำ':'Assigned Machine / Area','ผู้อนุมัติ':'Approved By','หัวข้อทักษะ':'Skill Topic',
+    'คะแนน':'Score','ผู้ประเมิน':'Evaluator','วันที่ประเมิน':'Evaluation Date','ระดับใหม่':'New Level',
+    'คำนวณจากคะแนนอัตโนมัติ':'Calculate Automatically','บันทึกผลสอบ':'Save Exam Result','ผล':'Result','ดำเนินการ':'Action',
+    'เริ่มทำข้อสอบ':'Start Examination','ยังไม่ได้เริ่มสอบ':'Not Started','ไตรมาส':'Quarter','Skill ปัจจุบัน':'Current Skill',
+    'ภาคปฏิบัติ':'Practical Test','Skill ใหม่':'New Skill','วันที่พิมพ์':'Print Date','รอผลสอบ':'Waiting for Result',
+    'ดาวน์โหลด':'Download','ดาวน์โหลดหน้านี้ PDF':'Download This Page PDF','พิมพ์':'Print','ค้นหา':'Search','เพิ่ม':'Add',
+    'พร้อมดาวน์โหลด':'Ready to Download','ดาวน์โหลดรายชื่อพนักงาน Excel':'Download Employee List (Excel)',
+    'ดาวน์โหลดรายชื่อพนักงาน CSV':'Download Employee List (CSV)','ดาวน์โหลด Skill Card ทั้งหมด PDF':'Download All Skill Cards (PDF)',
+    'ดาวน์โหลด Skill Card Section ที่เลือก PDF':'Download Selected Section Skill Cards (PDF)',
+    'ดาวน์โหลด Skill Matrix ทุก Section PDF':'Download All Section Skill Matrices (PDF)',
+    'ดาวน์โหลด Skill Matrix Excel':'Download Skill Matrix (Excel)','ดาวน์โหลด Training Plan PDF':'Download Training Plan (PDF)',
+    'ดาวน์โหลดผลสอบ PDF':'Download Examination Results (PDF)','ดาวน์โหลด Organization PDF':'Download Organization Chart (PDF)',
+    'ดาวน์โหลด Section Chart ทุก Section PDF':'Download All Section Charts (PDF)','ดาวน์โหลดข้อมูลสำรอง JSON':'Download Backup (JSON)',
+    'ดาวน์โหลดทั้งหมดเป็น ZIP':'Download Everything (ZIP)','อัปโหลด/ซิงก์ข้อมูลพนักงาน 116 คน':'Upload / Sync 116 Employees',
+    'วิธีแก้ไขและเซฟข้อมูล':'How to Edit and Save','ค้นหาชื่อ รหัส Section หรือตำแหน่ง':'Search name, ID, section, or position',
+    'ค้นหาชื่อ รหัส เบอร์โทร หรือตำแหน่ง':'Search name, ID, phone, or position','เลือก Section และเรียงลำดับพนักงานได้':'Select a section and arrange employees',
+    'ประเมินและทบทวนทุก 3 เดือน · Level 1–5 · สีแดงหมายถึงเกินกำหนด':'Evaluate every 3 months · Level 1–5 · Red means overdue',
+    'บัตรประจำตัวทักษะสำหรับพกติดตัวเมื่อไปประจำเครื่องจักร':'Employee skill identification card for assigned machinery',
+    'บันทึกผลสอบเพื่อปรับระดับ Skill Matrix ของพนักงาน':'Record exam results to update employee skill levels',
+    'รองรับ JPG, PNG, WEBP · ระบบจะย่อรูปอัตโนมัติ · ขนาดไม่เกิน 5 MB':'Supports JPG, PNG, WEBP · Images are resized automatically · Maximum 5 MB'
+  };
+
+  const protectedSelectors = [
+    '#results tbody','tbody#results','#skillCardEmployee','#onlineExamEmployee','#examEmployee',
+    '[data-employee-name]','.employee-name','.emp-name'
+  ];
+  function isProtected(el){
+    if(!el || !el.closest) return false;
+    return protectedSelectors.some(s=>{try{return !!el.closest(s)}catch(e){return false}});
+  }
+  function bilingual(text){
+    const trimmed=text.trim();
+    if(!trimmed || trimmed.includes(' / ') || trimmed.includes(' /\n')) return text;
+    const en=dict[trimmed];
+    if(!en) return text;
+    return text.replace(trimmed, trimmed+' / '+en);
+  }
+  function translateElement(el){
+    if(!el || isProtected(el)) return;
+    if(el.matches && el.matches('input,textarea')){
+      if(el.placeholder && dict[el.placeholder] && !el.placeholder.includes(' / ')) el.placeholder += ' / '+dict[el.placeholder];
+      return;
+    }
+    if(el.matches && el.matches('option')){
+      const t=el.textContent.trim(); if(dict[t] && !t.includes(' / ')) el.textContent=t+' / '+dict[t];
+      return;
+    }
+    [...el.childNodes].forEach(n=>{
+      if(n.nodeType===Node.TEXT_NODE && n.nodeValue.trim()) n.nodeValue=bilingual(n.nodeValue);
+    });
+    if(el.getAttribute && el.getAttribute('title')){
+      const t=el.getAttribute('title'); if(dict[t] && !t.includes(' / ')) el.setAttribute('title',t+' / '+dict[t]);
+    }
+  }
+  function apply(root=document){
+    const selectors='button,h1,h2,h3,h4,label,th,option,.exam-note,.notice,.stat span,.status-waiting,input,textarea';
+    if(root.matches && root.matches(selectors)) translateElement(root);
+    if(root.querySelectorAll) root.querySelectorAll(selectors).forEach(translateElement);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>apply()); else apply();
+  new MutationObserver(muts=>muts.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1) apply(n)}))).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
 </body></html>
